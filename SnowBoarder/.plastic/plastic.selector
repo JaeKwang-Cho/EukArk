@@ -1,4 +1,0 @@
-repository "SnowBoarder@dorasima@cloud"
-  path "/"
-    br "/main"
-    co "/main"
