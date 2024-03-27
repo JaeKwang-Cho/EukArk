@@ -7,58 +7,129 @@ using UnityEngine.InputSystem;
 public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] float runSpeed = 5f;
-    //[SerializeField] float climbingSpeed = 1f;
-    //[SerializeField] float jumpSpeed = 5f;
-    //[SerializeField] Vector2 deathKick = new Vector2(10f, 10f);
-    //[SerializeField] GameObject bulletObject;
-    //[SerializeField] Transform gunTransform;
+    [SerializeField] float jumpSpeed = 5f;
 
     Vector2 moveInput;
     Rigidbody2D rb2d;
     Animator animator;
-    //CapsuleCollider2D bodyCollider2d;
-    //BoxCollider2D feetCollider2d;
+    CapsuleCollider2D bodyCollider2d;
+    BoxCollider2D feetCollider2d;
 
     private Vector2 speedToApply = new Vector2();
-    //private Vector2 jumpToApply = new Vector2();
-    //private Vector2 climbToApply = new Vector2();
-    //private float currGravityScale;
-    //private bool bIsAlive;
+    private Vector2 jumpToApply = new Vector2();
+    private float currGravityScale;
+
+    private bool IsCrouching = false;
+    private bool IsInAir = false;
+    private Coroutine jumpAnimCoroutine;
 
     void Start()
     {
         rb2d = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        //bodyCollider2d = GetComponent<CapsuleCollider2D>();
-        //feetCollider2d = GetComponent<BoxCollider2D>();
-        //currGravityScale = rb2d.gravityScale;
-        //bIsAlive = true;
+        animator = GetComponentInChildren<Animator>();
+        bodyCollider2d = GetComponent<CapsuleCollider2D>();
+        feetCollider2d = GetComponent<BoxCollider2D>();
+        currGravityScale = rb2d.gravityScale;
     }
 
     void Update()
     {
-        //if (!bIsAlive){return;}
+        UpdateJumpAnimation();
         Run();
         FlipSprite();
-        //ClimbLadder();
-        //Die();
+        OnCrouch();
     }
 
     void OnMove(InputValue _value)
     {
-        //if (!bIsAlive){return;}
         moveInput = _value.Get<Vector2>();
     }
 
     void Run()
     {
+        if (IsCrouching)
+        {
+            return;
+        }
         float playerVelocity = moveInput.x * runSpeed;
         speedToApply.Set(playerVelocity, rb2d.velocity.y);
         rb2d.velocity = speedToApply;
     }
 
-    /*
+    void OnCrouch()
+    {
+        if (!feetCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
+        {
+            return;
+        }
+        if (Input.GetKeyDown(KeyCode.LeftControl))
+        {
+            animator.SetBool("IsCrouching", true);
+            IsCrouching = true;
+        }
+        else if (Input.GetKeyUp(KeyCode.LeftControl))
+        {
+            animator.SetBool("IsCrouching", false);
+            IsCrouching = false;
+        }
+    }
+
     void OnJump(InputValue _inputValue)
+    {
+        //if (!bIsAlive){return;}
+        
+        if (!feetCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
+        {
+            return;
+        }
+        if (_inputValue.isPressed)
+        {
+            animator.SetBool("IsRunning", false);
+            animator.SetTrigger("TriggerJump");
+            jumpToApply.Set(0f, jumpSpeed);
+            rb2d.velocity += jumpToApply;
+            if(jumpAnimCoroutine != null)
+            {
+                StopCoroutine(jumpAnimCoroutine);
+            }
+            jumpAnimCoroutine = StartCoroutine(StartUpdateJumpAnimation());
+        }
+    }
+
+    void UpdateJumpAnimation()
+    {
+        if(!IsInAir)
+        {
+            return;
+        }
+        if (feetCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
+        {
+            animator.ResetTrigger("TriggerJump");
+            animator.SetTrigger("TriggerLanding");
+            animator.SetBool("IsJumping", false);
+            IsInAir = false;
+            return;
+        }
+        
+        float yVelocity = rb2d.velocity.y;
+        if(yVelocity > Mathf.Epsilon)
+        {
+            animator.SetBool("IsJumping", true);
+        }
+        else if(yVelocity < Mathf.Epsilon)
+        {
+            animator.SetBool("IsJumping", false);
+        }
+    }
+
+    IEnumerator StartUpdateJumpAnimation()
+    {
+        yield return new WaitForSeconds(0.03f);
+        IsInAir = true;
+        //Debug.Log("StartUpdateJumpAnimation");
+    }
+ 
+    void OnFire(InputValue _inputValue)
     {
         //if (!bIsAlive){return;}
         if (!feetCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
@@ -67,28 +138,23 @@ public class PlayerMovement : MonoBehaviour
         }
         if (_inputValue.isPressed)
         {
-            jumpToApply.Set(0f, jumpSpeed);
-            rb2d.velocity += jumpToApply;
+            animator.SetTrigger("TriggerAttack");
         }
     }
-    */
 
-    /*
-    void OnFire(InputValue _inputValue)
-    {
-        //if (!bIsAlive){return;}
-        if (_inputValue.isPressed)
-        {
-            Instantiate(bulletObject, gunTransform.position, transform.rotation);
-        }
-    }
-    */
     void FlipSprite()
     {
         if (Mathf.Abs(moveInput.x) > Mathf.Epsilon)
         {
             transform.localScale = new Vector2(Mathf.Sign(moveInput.x), 1f);
-            animator.SetBool("IsRunning", true);
+            if (feetCollider2d.IsTouchingLayers(LayerMask.GetMask("Ground")))
+            {
+                animator.SetBool("IsRunning", true);
+            }
+            else
+            {
+                animator.SetBool("IsRunning", false);
+            }
         }
         else
         {
@@ -118,17 +184,6 @@ public class PlayerMovement : MonoBehaviour
         //Vector2 climbToApply = new Vector2(rb2d.velocity.x, climbVelocity);
         climbToApply.Set(rb2d.velocity.x, climbVelocity);
         rb2d.velocity = climbToApply;
-    }
-
-    void Die()
-    {
-        if (bodyCollider2d.IsTouchingLayers(LayerMask.GetMask("Enemy", "Hazards")))
-        {
-            bIsAlive = false;
-            animator.SetTrigger("Dying");
-            rb2d.velocity += deathKick;
-            gameSession.ProcessPlayerDeath();
-        }
     }
     */
 }
