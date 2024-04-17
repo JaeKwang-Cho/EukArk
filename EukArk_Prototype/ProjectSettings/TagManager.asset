@@ -3,7 +3,10 @@
 --- !u!78 &1
 TagManager:
   serializedVersion: 2
-  tags: []
+  tags:
+  - Monster
+  - Ground
+  - TopCorner
   layers:
   - Default
   - TransparentFX
@@ -13,8 +16,8 @@ TagManager:
   - UI
   - Player
   - Ground
-  - 
-  - 
+  - Ladder
+  - Monster
   - 
   - 
   - 
@@ -44,6 +47,15 @@ TagManager:
   - name: Platforms
     uniqueID: 2364892155
     locked: 0
+  - name: Ladder
+    uniqueID: 2091026615
+    locked: 0
   - name: Player
     uniqueID: 324893757
+    locked: 0
+  - name: Monster
+    uniqueID: 2920686119
+    locked: 0
+  - name: UI
+    uniqueID: 2942065727
     locked: 0
