@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 public class CombatComponents : MonoBehaviour
 {
@@ -14,6 +15,12 @@ public class CombatComponents : MonoBehaviour
     [SerializeField] float attackReactTime = 1f;
     [SerializeField] float attackCooldown = 3f;
     [SerializeField] float attackAfterDelay = 1f;
+
+    [Header("Attack Components")]
+    [SerializeField]  GameObject splashAttackPrefab;
+    GameObject emptyTemp = null;
+    GameObject splashAttackObject = null;
+    SplashAttackComp splashAttackComp;
 
     public bool isAlive = true;
     public bool isAttacking = false;
@@ -44,7 +51,7 @@ public class CombatComponents : MonoBehaviour
             return;
         }
         healthPoints -= _damage;
-        Debug.Log("Is Ai : " + isAI + " Hit...");
+        //Debug.Log("Is Ai : " + isAI + " Hit...");
         if (healthPoints <= 0)
         {
             isAlive = false;
@@ -97,6 +104,73 @@ public class CombatComponents : MonoBehaviour
         {
             DealDamage(combatComponents);
         }
+    }
+
+    public void SplashAttack()
+    {
+        if(emptyTemp != null || splashAttackObject != null)
+        {
+            return;
+        }
+        emptyTemp = new GameObject("temp");
+
+        StartCoroutine(WaitUntilCreateEmpty());
+    }
+
+    IEnumerator WaitUntilCreateEmpty()
+    {
+        yield return new WaitUntil(IsEmptyValid);
+        if(emptyTemp == null)
+        {
+            Debug.Log("Empty is null");
+        }
+        emptyTemp.transform.position = transform.position;
+        //temp.SetActive(false);
+
+        //Assert.IsTrue(emptyTemp != null);
+
+        splashAttackObject = Instantiate(splashAttackPrefab, emptyTemp.transform);
+        StartCoroutine(WaitUntilCreateSplashComp());
+    }
+
+    bool IsEmptyValid()
+    {
+        return emptyTemp.scene.IsValid();
+    }
+
+    IEnumerator WaitUntilCreateSplashComp()
+    {
+        yield return new WaitUntil(IsSplashValid);
+        if (splashAttackObject == null)
+        {
+            Debug.Log("splash is null");
+        }
+
+        splashAttackComp = splashAttackObject.GetComponent<SplashAttackComp>();
+        if(splashAttackComp == null)
+        {
+            Debug.Log("splashAttackComp is null");
+        }
+
+        splashAttackObject.transform.position = transform.position;
+        splashAttackObject.transform.parent = null;
+        Destroy(emptyTemp);
+        splashAttackObject.SetActive(true);
+
+        StartCoroutine(DestroySplashComp());
+    }
+
+    bool IsSplashValid()
+    {
+        return splashAttackObject.scene.IsValid();
+    }
+
+    IEnumerator DestroySplashComp()
+    {
+        yield return new WaitForSecondsRealtime(0.1f);
+        splashAttackComp.AttackSplash();
+        Destroy(splashAttackObject);
+        splashAttackObject = null;
     }
 
     private void OnTriggerEnter2D(Collider2D _other)

@@ -1,10 +1,9 @@
 using System.Collections;
-using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.EnhancedTouch;
 using UnityEngine.SceneManagement;
+
+
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -38,18 +37,14 @@ public class PlayerMovement : MonoBehaviour
     private float dashSpeed = 5f;
     public float spriteDirection = 1f;
 
-    [Header("Movement Status")]
+    // Ground
+    [Header("Ground Status")]
+    // Crouch
     public bool isCrouching = false;
-    public bool isStartToJump = false;
-    public bool isInAir = false;
-    public bool isOnLadder = false;
+    // Run
     public bool isMoving = false;
-    public bool isClimbing = false;
-    public bool isLadderHanging = false;
-    public bool isFalling = false;
-    public bool isRising = false;
-    public bool isLanding = false;
 
+    // Dash
     [Header("Dash Status")]
     public bool isDashing = false;
     public bool isDashCooldown = false;
@@ -58,6 +53,21 @@ public class PlayerMovement : MonoBehaviour
     Coroutine dashCoroutine = null;
     Coroutine dashCooldownCoroutine = null;
 
+    // InAir
+    [Header("InAir Status")]
+    public bool isInAir = false;
+    public bool isStartToJump = false;
+    public bool isFalling = false;
+    public bool isRising = false;
+    public bool isLanding = false;
+
+    // Ladder
+    [Header("Ladder Status")]
+    public bool isOnLadder = false;
+    public bool isClimbing = false;
+    public bool isLadderHanging = false;
+
+    // Hang
     [Header("Hang Status")]
     public bool isCliffHanging = false;
     public bool isClimbingCliff = false;
@@ -65,15 +75,34 @@ public class PlayerMovement : MonoBehaviour
     Coroutine climbingCoroutine = null;
 
     [Header("Combat Status")]
+    // General
     public bool isHit = false;
     public bool isDie = false;
-    public float comboCooldownTime = 1f;
+    // Ground Melee
+    public bool isGroundMelee = false;
+    public string currMeleeAnimName;
+
+    public float comboCooldownTime = 0.5f;
     public static int numOfClicks = 0;
     public float maxComboDelayTime = 0.75f;
     public bool isMeleeCooldown = false;
     public bool isMeleeButtonPressed = false;
+    public bool isUpperMeleeCooldown = false;
     Coroutine ComboWaiter = null;
     Coroutine ComboCooldownWaiter = null;
+
+    // InAir Melee (X)
+
+    // Stomp
+    public bool isStomping = false;
+    public bool bStartStomp = false;
+    public bool bMiddleStomp = false;
+    public bool bEndStomp = false;
+    public float stompSetTime = 0.5f;
+    public float stompSpeed = 10f;
+    public float stompAfterDelay = 0.5f;
+    public bool isStompCooldown = false;
+    public float stompCooldown = 5f;
 
     void Start()
     {
@@ -112,6 +141,10 @@ public class PlayerMovement : MonoBehaviour
 
         UpdateMovementState();
         UpdateComboBufferInput();
+        if (isGroundMelee)
+        {
+            WaitUntilMeleeAnimEnds();
+        }
         UpdateClimbAnim();
         UpdateJumpAnim();
         UpdateRunAnim();
@@ -193,7 +226,7 @@ public class PlayerMovement : MonoBehaviour
 
     void FlipSprite()
     {
-        if (Mathf.Abs(moveInput.x) > Mathf.Epsilon)
+        if (Mathf.Abs(moveInput.x) > Mathf.Epsilon && !isGroundMelee)
         {
             transform.localScale = new Vector2(Mathf.Sign(moveInput.x), 1f);
             isMoving = true;
@@ -212,12 +245,106 @@ public class PlayerMovement : MonoBehaviour
     }
 
     // ===================================
-    // ======= Dash Animation Area ========
+    // ======= Stomp Animation Area ======
+    // ===================================
+
+    void OnStomp()
+    {
+        if (isDie || isHit)
+        {
+            return;
+        }
+
+        if (isStompCooldown)
+        {
+            return;
+        }
+
+        if (!isInAir)
+        {
+            return;
+        }
+
+        //Debug.Log("Start Stomp");
+        rb2d.gravityScale = 0f;
+        rb2d.velocity = Vector2.zero;
+
+        animator.SetBool("IsStomping", true);
+
+        isStompCooldown = true;
+        isStomping = true;
+        bStartStomp = true;
+
+        StartCoroutine(StartToNail());
+    }
+
+    IEnumerator StartToNail()
+    {
+        yield return new WaitForSecondsRealtime(stompSetTime);
+        bStartStomp = false;
+        bMiddleStomp = true;
+        //Debug.Log("Start Nail");
+        rb2d.gravityScale = currGravityScale;
+
+        Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mousePos.z = 0f;
+
+        LayerMask excludeMonster = LayerMask.GetMask("Monster");
+
+        bodyCollider2d.excludeLayers = excludeMonster;
+        feetCollider2d.excludeLayers = excludeMonster;
+
+        Vector2 stompVelocity = new Vector2(mousePos.x - transform.position.x, -stompSpeed);
+        rb2d.velocity = stompVelocity;
+
+        StartCoroutine(StompAttack());
+    }
+
+    IEnumerator StompAttack()
+    {
+        yield return new WaitUntil(checkStompToGround);
+        bMiddleStomp = false;
+        bEndStomp = true;
+        rb2d.velocity = Vector2.zero;
+
+        //Debug.Log("Start Attack");
+        combatComponents.SplashAttack();
+        StartCoroutine(EndStomp());
+    }
+
+    bool checkStompToGround()
+    {
+        return !isInAir;
+    }
+
+    IEnumerator EndStomp()
+    {
+        yield return new WaitForSecondsRealtime(stompAfterDelay);
+        bEndStomp = false;
+        animator.SetBool("IsStomping", false);
+        isStomping = false;
+
+        LayerMask excludeNothing = 0;
+
+        bodyCollider2d.excludeLayers = excludeNothing;
+        feetCollider2d.excludeLayers = excludeNothing;
+
+        StartCoroutine(StompCooldown());
+    }
+
+    IEnumerator StompCooldown()
+    {
+        yield return new WaitForSecondsRealtime(stompCooldown);
+        isStompCooldown = false;
+    }
+
+    // ===================================
+    // ======= Dash Animation Area =======
     // ===================================
 
     void OnDash(InputValue _value)
     {
-        if (isDie || isHit)
+        if (isDie || isHit || isStomping)
         {
             return;
         }
@@ -273,7 +400,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnSwiftAttack()
     {
-        if (isDie || isHit)
+        if (isDie || isHit || isStomping)
         {
             return;
         }
@@ -324,7 +451,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnFire(InputValue _inputValue)
     {
-        if (isDie || isHit)
+        if (isDie || isHit || isStomping)
         {
             return;
         }
@@ -338,22 +465,33 @@ public class PlayerMovement : MonoBehaviour
 
     void OnMelee(InputValue _inputValue)
     {
-        if (isDie || isHit)
+        if (isDie || isHit || isStomping)
         {
             return;
         }
 
         if (isInAir)
         {
-            animator.SetTrigger("TriggerAirMelee");
-            combatComponents.Attack();
+            if (Input.GetKey(KeyCode.S))
+            {
+                OnStomp();
+            }
+            else
+            {
+                animator.SetTrigger("TriggerAirMelee");
+                combatComponents.Attack();
+            }
             return;
         }
 
         if (isCrouching)
         {
+            isGroundMelee = true;
             animator.SetTrigger("TriggerLowMelee");
             combatComponents.Attack();
+            currMeleeAnimName = "LowMelee";
+
+            rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
             return;
         }
 
@@ -369,6 +507,17 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        if (!isUpperMeleeCooldown && Input.GetKey(KeyCode.W)) 
+        {
+            isGroundMelee = true;
+            animator.SetTrigger("TriggerUpperMelee");
+            combatComponents.Attack();
+            currMeleeAnimName = "UpperMelee";
+
+            rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
+            return;
+        }
+
         numOfClicks++;
         //Debug.Log("start" + numOfClicks);
         numOfClicks = Mathf.Clamp(numOfClicks, 0, 3);
@@ -377,6 +526,8 @@ public class PlayerMovement : MonoBehaviour
             ComboReset();
         }
         isMeleeButtonPressed = true;
+        rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
+
         //Debug.Log("end " + numOfClicks);
     }
 
@@ -420,6 +571,7 @@ public class PlayerMovement : MonoBehaviour
         {
             StopCoroutine(ComboWaiter);
             //Debug.Log("Reset waiter");
+            isGroundMelee = true;
         }
         ComboWaiter = StartCoroutine(WaitNextMeleeInput());
     }
@@ -434,6 +586,7 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log("late to combo");
         numOfClicks = 0;
         isMeleeCooldown = true;
+        isGroundMelee = false;
     }
 
     IEnumerator WaitComboCooldown()
@@ -446,13 +599,22 @@ public class PlayerMovement : MonoBehaviour
         ComboCooldownWaiter = null;
     }
 
+    void WaitUntilMeleeAnimEnds()
+    {
+        if(animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.95f && animator.GetCurrentAnimatorStateInfo(0).IsName(currMeleeAnimName))
+        {
+            isGroundMelee = false;
+            currMeleeAnimName = "";
+        }
+    }
+
     // ===================================
     // ======= Run Animation Area ========
     // ===================================
 
     void BasicMove()
     {
-        if (isLadderHanging || isCliffHanging || isClimbingCliff)
+        if (isLadderHanging || isCliffHanging || isClimbingCliff || isStomping || isGroundMelee)
         {
             return;
         }
@@ -504,6 +666,10 @@ public class PlayerMovement : MonoBehaviour
 
     void Crouch()
     {
+        if (isStomping)
+        {
+            return;
+        }
         if (moveInput.y < 0f)
         {
             isCrouching = true;
@@ -516,7 +682,7 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateCrouchAnim()
     {
-        if (isInAir || isLadderHanging)
+        if (isInAir || isLadderHanging || isStomping)
         {
             return;
         }
@@ -546,7 +712,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnJump(InputValue _inputValue)
     {
-        if (isDie || isHit) 
+        if (isDie || isHit || isStomping || isGroundMelee) 
         {
             return;
         }
@@ -614,7 +780,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ClimbLadder()
     {
-        if (isCliffHanging)
+        if (isCliffHanging || isStomping)
         {
             return;
         }
@@ -684,7 +850,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ActionOnTopCorner()
     {
-        if (isOnLadder)
+        if (isOnLadder || isStomping)
         {
             return;
         }
