@@ -7,10 +7,19 @@ public class CliffHanger : MonoBehaviour
     public bool isTriggerTopCorner = false;
     public bool isOnGround = false;
     BoxCollider2D feetCollider2d;
+    public GameObject handAttach
+    {
+        get; set;
+    } = null;
 
     public bool IsOnTopCorner()
     {
         return !isOnGround && isTriggerTopCorner;
+    }
+
+    public bool IsEscapeTopCorner()
+    {
+        return !isTriggerTopCorner;
     }
 
     public void SetFeetCollider2d(BoxCollider2D _feetCollider2d)
@@ -35,6 +44,7 @@ public class CliffHanger : MonoBehaviour
         if (_other.CompareTag("TopCorner"))
         {
             isTriggerTopCorner = true;
+            handAttach = _other.transform.GetChild(0).gameObject;
         }
     }
 
@@ -43,6 +53,7 @@ public class CliffHanger : MonoBehaviour
         if (_other.CompareTag("TopCorner"))
         {
             isTriggerTopCorner = false;
+            handAttach = null;
         }
     }
 }

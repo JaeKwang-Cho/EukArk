@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &767004489456217245
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5239447132845828503}
+  m_Layer: 6
+  m_Name: HandForHang
+  m_TagString: HandForHang
+  m_Icon: {fileID: 7148428337604731935, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5239447132845828503
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 767004489456217245}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.049, y: 0.187, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 850927365903669041}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1779825811057576611
 GameObject:
   m_ObjectHideFlags: 0
@@ -37,6 +68,8 @@ Transform:
   - {fileID: 3324843644270609561}
   - {fileID: 3374208337039365284}
   - {fileID: 2271193194529418765}
+  - {fileID: 3340972127644674086}
+  - {fileID: 5239447132845828503}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5754407085862040587
@@ -92,27 +125,45 @@ MonoBehaviour:
   currGravityScale: 0
   spriteDirection: 1
   isCrouching: 0
-  isStartToJump: 0
-  isInAir: 0
-  isOnLadder: 0
   isMoving: 0
-  isClimbing: 0
-  isLadderHanging: 0
-  isFalling: 0
-  isRising: 0
-  isLanding: 0
   isDashing: 0
   isDashCooldown: 0
   isSwiftMelee: 0
   isSwiftMeleeCooldown: 0
-  isCliffHanging: 0
-  isClimbingCliff: 0
-  isDroppingCliff: 0
+  isInAir: 0
+  isStartToJump: 0
+  isFalling: 0
+  isRising: 0
+  isLanding: 0
+  isOnLadder: 0
+  isClimbing: 0
+  isLadderHanging: 0
+  isCliffProgressing: 0
+  isInitialPos: 0
+  isCliffHang: 0
+  isCliffY: 0
+  isCliffX: 0
+  isCliffFall: 0
+  CliffYAnimLength: 0
+  CliffXAnimLength: 0
   isHit: 0
   isDie: 0
+  isGroundMelee: 0
+  currMeleeAnimName: 
   comboCooldownTime: 1
   maxComboDelayTime: 0.75
   isMeleeCooldown: 0
+  isMeleeButtonPressed: 0
+  isUpperMeleeCooldown: 0
+  isStomping: 0
+  bStartStomp: 0
+  bMiddleStomp: 0
+  bEndStomp: 0
+  stompSetTime: 0.5
+  stompSpeed: 10
+  stompAfterDelay: 0.5
+  isStompCooldown: 0
+  stompCooldown: 5
 --- !u!70 &5731641265517426891
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -386,7 +437,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 248013399, guid: 0a52791c2086404459d7b3c3756568bb, type: 3}
+  m_Sprite: {fileID: 1171078047, guid: 11f11ff46a00ade42902eff684f80c28, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -418,6 +469,68 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!1001 &1439234432830354725
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 850927365903669041}
+    m_Modifications:
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8809861228182375116, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+      propertyPath: m_Name
+      value: CrossHair
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+--- !u!4 &3340972127644674086 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4441873481430260995, guid: 25d0a584c19ecc64b9b8f15918fa458f, type: 3}
+  m_PrefabInstance: {fileID: 1439234432830354725}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7187299008597895829
 PrefabInstance:
   m_ObjectHideFlags: 0

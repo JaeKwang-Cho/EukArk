@@ -1,9 +1,8 @@
 using System.Collections;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-
-
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -11,7 +10,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Numeric Attributes - Speed")]
     [SerializeField] float runSpeed = 5f;
     [SerializeField] float crouchSpeed = 1f;
-    [SerializeField] float jumpSpeed = 5f;
+    [SerializeField] float jumpSpeed = 7f;
     [SerializeField] float climbingSpeed = 2f;
 
     [Header("Numeric Attributes - Combat")]
@@ -20,7 +19,12 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Numeric Attributes - Cooldown")]
     [SerializeField] float dashCooldown = 2f;
-    [SerializeField] float swiftMeleeCooldown = 5f;
+    //[SerializeField] float swiftMeleeCooldown = 5f;
+
+    [Header("Numeric Attributes - Melee")]
+    [SerializeField] AnimationCurve meleeSpeedScale;
+    [SerializeField] float meleeSpeed = 5f;
+    private float meleeDirection = 1f;
 
     Vector2 moveInput;
     Rigidbody2D rb2d;
@@ -29,13 +33,17 @@ public class PlayerMovement : MonoBehaviour
     BoxCollider2D feetCollider2d;
     CombatComponents combatComponents;
     CliffHanger cliffHanger;
+    public CrossHairComponents crossHair
+    {
+        get; set;
+    } = null;
 
     private Vector2 speedToApply = new Vector2();
     private Vector2 jumpToApply = new Vector2();
     private Vector2 climbToApply = new Vector2();
-    public float currGravityScale;
+    private float currGravityScale;
     private float dashSpeed = 5f;
-    public float spriteDirection = 1f;
+    private float spriteDirection = 1f;
 
     // Ground
     [Header("Ground Status")]
@@ -48,8 +56,8 @@ public class PlayerMovement : MonoBehaviour
     [Header("Dash Status")]
     public bool isDashing = false;
     public bool isDashCooldown = false;
-    public bool isSwiftMelee = false;
-    public bool isSwiftMeleeCooldown = false;
+    //public bool isSwiftMelee = false;
+    //public bool isSwiftMeleeCooldown = false;
     Coroutine dashCoroutine = null;
     Coroutine dashCooldownCoroutine = null;
 
@@ -69,10 +77,18 @@ public class PlayerMovement : MonoBehaviour
 
     // Hang
     [Header("Hang Status")]
-    public bool isCliffHanging = false;
-    public bool isClimbingCliff = false;
-    public bool isDroppingCliff = false;
-    Coroutine climbingCoroutine = null;
+    public bool isCliffProgressing = false;
+    public bool isInitialPos = false;
+    public bool isCliffHang = false;
+    public bool isCliffY = false;
+    public bool isCliffX = false;
+    public bool isCliffFall = false;
+    Coroutine cliffCoroutine = null;
+    GameObject handForHang = null;
+    Vector3 handInitialOffset = Vector3.zero;
+    public float CliffYAnimLength = 0f;
+    public float CliffXAnimLength = 0f;
+    Vector3 beforeHangPos = Vector3.zero;
 
     [Header("Combat Status")]
     // General
@@ -87,13 +103,15 @@ public class PlayerMovement : MonoBehaviour
     public float maxComboDelayTime = 0.75f;
     public bool isMeleeCooldown = false;
     public bool isMeleeButtonPressed = false;
-    public bool isUpperMeleeCooldown = false;
+    public bool isMeleeButtonReleased = false;
+    //public bool isUpperMeleeCooldown = false;
     Coroutine ComboWaiter = null;
     Coroutine ComboCooldownWaiter = null;
 
     // InAir Melee (X)
 
     // Stomp
+    /*
     public bool isStomping = false;
     public bool bStartStomp = false;
     public bool bMiddleStomp = false;
@@ -103,6 +121,7 @@ public class PlayerMovement : MonoBehaviour
     public float stompAfterDelay = 0.5f;
     public bool isStompCooldown = false;
     public float stompCooldown = 5f;
+    */
 
     void Start()
     {
@@ -116,6 +135,37 @@ public class PlayerMovement : MonoBehaviour
         cliffHanger.SetFeetCollider2d(feetCollider2d);
 
         currGravityScale = rb2d.gravityScale;
+        FindHandObject();
+        GetCliffAnimLength();
+    }
+
+    void FindHandObject()
+    {
+        for (int i = 0; i < transform.childCount; i++)
+        {
+            GameObject temp = transform.GetChild(i).gameObject;
+            if (temp.CompareTag("HandForHang"))
+            {
+                handForHang = temp;
+                break;
+            }
+        }
+    }
+
+    void GetCliffAnimLength()
+    {
+        AnimationClip[] animationClips = animator.runtimeAnimatorController.animationClips;
+        foreach(AnimationClip animationClip in animationClips)
+        {
+            if(animationClip.name == "CliffUp_Player_Test")
+            {
+                CliffYAnimLength = animationClip.length;
+            }
+            else if(animationClip.name == "CliffSide_Player_Test")
+            {
+                CliffXAnimLength = animationClip.length;
+            }
+        }
     }
 
     void Update()
@@ -159,16 +209,17 @@ public class PlayerMovement : MonoBehaviour
         {
             isInAir = true;
             float yVelocity = rb2d.velocity.y;
-            if (cliffHanger.IsOnTopCorner())
+            if (cliffHanger.IsOnTopCorner() && !isCliffFall && !isCliffY && !isCliffX)
             {
-                isCliffHanging = true;
+                isCliffProgressing = true;
+                isCliffHang = true;
             }
-            else
+            else if(!cliffHanger.IsOnTopCorner() && isCliffProgressing)
             {
-                isCliffHanging = false;
+                isCliffHang = false;
             }
 
-            if (!isLadderHanging)
+            if (!isLadderHanging || !isCliffProgressing)
             {
                 if (yVelocity < -Mathf.Epsilon)
                 {
@@ -199,9 +250,16 @@ public class PlayerMovement : MonoBehaviour
             if (isInAir)
             {
                 isLanding = true;
-                isDroppingCliff = false;
             }
-            isCliffHanging = false;
+            if (isCliffProgressing)
+            {
+                isCliffProgressing = false;
+                isCliffX = false;
+                isCliffFall = false;
+                isInitialPos = false;
+                cliffCoroutine = null;
+                animator.SetBool("IsCliffFall", false);
+            }
             isInAir = false;
             isFalling = false;
             isRising = false;
@@ -226,11 +284,23 @@ public class PlayerMovement : MonoBehaviour
 
     void FlipSprite()
     {
-        if (Mathf.Abs(moveInput.x) > Mathf.Epsilon && !isGroundMelee)
+        if(isLadderHanging || isGroundMelee || isCliffProgressing)
         {
-            transform.localScale = new Vector2(Mathf.Sign(moveInput.x), 1f);
+            return;
+        }
+        /*
+        spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
+        bool flipThreshold = Mathf.Abs(crossHair.transform.position.x - transform.position.x) > 0.5f;
+        if (flipThreshold)
+        {
+            transform.localScale = new Vector2(spriteDirection, 1f);
+        }
+        */
+        if (Mathf.Abs(moveInput.x) > Mathf.Epsilon)
+        {
+            spriteDirection = Mathf.Sign(moveInput.x);
+            transform.localScale = new Vector2(spriteDirection, 1f);
             isMoving = true;
-            spriteDirection = transform.localScale.x;
         }
         else
         {
@@ -241,13 +311,32 @@ public class PlayerMovement : MonoBehaviour
     void OnMove(InputValue _value)
     {
         moveInput = _value.Get<Vector2>();
+
         //Debug.Log(moveInput);
+    }
+    // ===================================
+    // ======= Dash Animation Area =======
+    // ===================================
+
+    void OnCyanParrying(InputValue _inputValue)
+    {
+        Debug.Log("OnCyanParrying");
+    }
+
+    void OnYellowParrying(InputValue _inputValue)
+    {
+        Debug.Log("OnYellowParrying");
+    }
+
+    void OnMagentaParrying(InputValue _inputValue)
+    {
+        Debug.Log("OnMagentaParrying");
     }
 
     // ===================================
     // ======= Stomp Animation Area ======
     // ===================================
-
+    /*
     void OnStomp()
     {
         if (isDie || isHit)
@@ -294,7 +383,19 @@ public class PlayerMovement : MonoBehaviour
         bodyCollider2d.excludeLayers = excludeMonster;
         feetCollider2d.excludeLayers = excludeMonster;
 
-        Vector2 stompVelocity = new Vector2(mousePos.x - transform.position.x, -stompSpeed);
+        float xGap = Mathf.Abs(mousePos.x - transform.position.x);
+        float yGap = Mathf.Abs(mousePos.y - transform.position.y);
+
+        float xDirection = Mathf.Sign(mousePos.x - transform.position.x);
+        Vector2 stompVelocity;
+        if (xGap > yGap)
+        {
+            stompVelocity = new Vector2(xDirection * stompSpeed, -stompSpeed);
+        }
+        else 
+        {
+            stompVelocity = new Vector2(xGap / yGap * xDirection * stompSpeed , -stompSpeed);
+        }
         rb2d.velocity = stompVelocity;
 
         StartCoroutine(StompAttack());
@@ -337,14 +438,14 @@ public class PlayerMovement : MonoBehaviour
         yield return new WaitForSecondsRealtime(stompCooldown);
         isStompCooldown = false;
     }
-
+    */
     // ===================================
     // ======= Dash Animation Area =======
     // ===================================
 
     void OnDash(InputValue _value)
     {
-        if (isDie || isHit || isStomping)
+        if (isDie || isHit /*|| isStomping*/)
         {
             return;
         }
@@ -398,6 +499,7 @@ public class PlayerMovement : MonoBehaviour
     // ======== Swift Attack Area ========
     // ===================================
 
+    /*
     void OnSwiftAttack()
     {
         if (isDie || isHit || isStomping)
@@ -416,7 +518,7 @@ public class PlayerMovement : MonoBehaviour
         isSwiftMelee = true;
         isSwiftMeleeCooldown = true;
 
-        combatComponents.Attack();
+        combatComponents.MeleeAttack();
 
         animator.SetBool("IsSwiftMelee", false);
         StartCoroutine(SwiftMeleeCooldown());
@@ -444,6 +546,7 @@ public class PlayerMovement : MonoBehaviour
         isSwiftMelee = false;
         animator.SetBool("IsSwiftMelee", false);
     }
+    */
 
     // ===================================
     // ======= Attack Animation Area =====
@@ -451,7 +554,7 @@ public class PlayerMovement : MonoBehaviour
 
     void OnFire(InputValue _inputValue)
     {
-        if (isDie || isHit || isStomping)
+        if (isDie || isHit /*|| isStomping*/)
         {
             return;
         }
@@ -465,21 +568,21 @@ public class PlayerMovement : MonoBehaviour
 
     void OnMelee(InputValue _inputValue)
     {
-        if (isDie || isHit || isStomping)
+        if (isDie || isHit/* || isStomping*/)
         {
             return;
         }
 
         if (isInAir)
         {
-            if (Input.GetKey(KeyCode.S))
+            //if (Input.GetKey(KeyCode.S))
             {
-                OnStomp();
+                //OnStomp();
             }
-            else
+            //else
             {
                 animator.SetTrigger("TriggerAirMelee");
-                combatComponents.Attack();
+                combatComponents.MeleeAttack();
             }
             return;
         }
@@ -488,7 +591,7 @@ public class PlayerMovement : MonoBehaviour
         {
             isGroundMelee = true;
             animator.SetTrigger("TriggerLowMelee");
-            combatComponents.Attack();
+            combatComponents.MeleeAttack();
             currMeleeAnimName = "LowMelee";
 
             rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
@@ -503,21 +606,26 @@ public class PlayerMovement : MonoBehaviour
 
         if (isDashing)
         {
-            OnSwiftAttack();
+            //OnSwiftAttack();
             return;
         }
 
+        if (isMoving)
+        {
+            isMoving = false;
+        }
+        /*
         if (!isUpperMeleeCooldown && Input.GetKey(KeyCode.W)) 
         {
             isGroundMelee = true;
             animator.SetTrigger("TriggerUpperMelee");
-            combatComponents.Attack();
+            combatComponents.MeleeAttack();
             currMeleeAnimName = "UpperMelee";
 
             rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
             return;
         }
-
+        */
         numOfClicks++;
         //Debug.Log("start" + numOfClicks);
         numOfClicks = Mathf.Clamp(numOfClicks, 0, 3);
@@ -525,8 +633,22 @@ public class PlayerMovement : MonoBehaviour
         {
             ComboReset();
         }
-        isMeleeButtonPressed = true;
-        rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
+        isMeleeButtonReleased = true;
+
+        spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
+
+        float xGapValue = crossHair.transform.position.x - transform.position.x;
+        //bool flipThreshold = Mathf.Abs(xGapValue) > 0.5f;
+        //if (!flipThreshold)
+        {
+           // return;
+        }
+        transform.localScale = new Vector2(spriteDirection, 1f);
+
+        float distanceToCursor = Vector2.Distance(crossHair.transform.position, transform.position);
+        //float yGapValue = Mathf.Abs(crossHair.transform.position.x - transform.position.x);
+
+        meleeDirection = meleeSpeed * xGapValue / distanceToCursor;
 
         //Debug.Log("end " + numOfClicks);
     }
@@ -558,11 +680,32 @@ public class PlayerMovement : MonoBehaviour
             bAttackMotion = true;
         }
 
-        if(bAttackMotion && isMeleeButtonPressed)
+        if(bAttackMotion && isMeleeButtonReleased)
         {
-            combatComponents.Attack();
-            isMeleeButtonPressed = false;
+            combatComponents.MeleeAttack();
         }
+
+        if(animator.GetCurrentAnimatorStateInfo(0).IsName("A_Combo") 
+            || animator.GetCurrentAnimatorStateInfo(0).IsName("B_Combo")
+            || animator.GetCurrentAnimatorStateInfo(0).IsName("C_Combo"))
+        {
+            MeleeGoForward();
+            if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1f)
+            {
+                isMeleeButtonReleased = false;
+            }
+            
+        }
+    }
+
+    void MeleeGoForward()
+    {
+        float normalizedTime = animator.GetCurrentAnimatorStateInfo(0).normalizedTime;
+        float curSpeedScale = meleeSpeedScale.Evaluate(normalizedTime);
+
+        float forwardSpeed = meleeDirection * curSpeedScale;
+        speedToApply.Set(forwardSpeed, rb2d.velocity.y);
+        rb2d.velocity = speedToApply;
     }
 
     void ComboReset()
@@ -614,7 +757,7 @@ public class PlayerMovement : MonoBehaviour
 
     void BasicMove()
     {
-        if (isLadderHanging || isCliffHanging || isClimbingCliff || isStomping || isGroundMelee)
+        if (isLadderHanging || isCliffProgressing/* || isStomping */|| isGroundMelee)
         {
             return;
         }
@@ -641,10 +784,12 @@ public class PlayerMovement : MonoBehaviour
         if (isDashing)
         {
             animator.SetBool("IsDashing", true);
+            /*
             if (isSwiftMelee)
             {
                 animator.SetBool("IsSwiftMelee", true);
             }
+            */
         }
         else
         {
@@ -666,9 +811,9 @@ public class PlayerMovement : MonoBehaviour
 
     void Crouch()
     {
-        if (isStomping)
+        //if (isStomping)
         {
-            return;
+            //return;
         }
         if (moveInput.y < 0f)
         {
@@ -682,7 +827,7 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateCrouchAnim()
     {
-        if (isInAir || isLadderHanging || isStomping)
+        if (isInAir || isLadderHanging /*|| isStomping*/)
         {
             return;
         }
@@ -712,12 +857,12 @@ public class PlayerMovement : MonoBehaviour
 
     void OnJump(InputValue _inputValue)
     {
-        if (isDie || isHit || isStomping || isGroundMelee) 
+        if (isDie || isHit /*|| isStomping*/ || isGroundMelee) 
         {
             return;
         }
 
-        if (isInAir && !isLadderHanging && !isCliffHanging)
+        if (isInAir && !isLadderHanging && !isCliffProgressing)
         {
             return;
         }
@@ -740,28 +885,34 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateJumpAnim()
     {
+        if(isLadderHanging || isCliffProgressing)
+        {
+            if (!isCliffFall)
+            {
+                animator.SetBool("IsFalling", false);
+                return;
+            }
+        }
+        if (isInAir)
+        {
+            animator.SetBool("IsInAir", true);
+        }
+
         if (isFalling)
         {
-            animator.ResetTrigger("TriggerRise");
-            animator.SetTrigger("TriggerFalling");
+            animator.SetBool("IsFalling", true);
         }
         else if (isLanding)
         {
-            animator.ResetTrigger("TriggerFalling");
-            animator.SetTrigger("TriggerLanding");
+            animator.SetBool("IsFalling", false);
+            animator.SetBool("IsInAir", false);
             isLanding = false;
-        }
-        else if (isLadderHanging)
-        {
-            animator.ResetTrigger("TriggerJump");
-            animator.ResetTrigger("TriggerFalling");
-            animator.ResetTrigger("TriggerLanding");
         }
         else if (isStartToJump)
         {
             animator.SetBool("IsRunning", false);
-            animator.SetBool("IsClimbing", false);
-            animator.SetBool("IsHanging", false);
+            animator.SetBool("IsLadderClimbing", false);
+            animator.SetBool("IsLadderHanging", false);
 
             animator.SetTrigger("TriggerJump");
 
@@ -769,7 +920,7 @@ public class PlayerMovement : MonoBehaviour
         }
         else if (isRising && !isStartToJump)
         {
-            animator.SetTrigger("TriggerRise");
+            animator.SetBool("IsFalling", false);
             isRising = false;
         }
     }
@@ -780,7 +931,7 @@ public class PlayerMovement : MonoBehaviour
 
     void ClimbLadder()
     {
-        if (isCliffHanging || isStomping)
+        if (isCliffProgressing /*|| isStomping*/)
         {
             return;
         }
@@ -823,23 +974,23 @@ public class PlayerMovement : MonoBehaviour
     {
         if (!isLadderHanging)
         {
-            animator.SetBool("IsClimbing", false);
-            animator.SetBool("IsHanging", false);
+            animator.SetBool("IsLadderClimbing", false);
+            animator.SetBool("IsLadderHanging", false);
             return;
         }
         else
         {
-            animator.SetBool("IsHanging", true);
+            animator.SetBool("IsLadderHanging", true);
 
             if (isClimbing)
             {
-                animator.SetBool("IsClimbing", true);
+                animator.SetBool("IsLadderClimbing", true);
                 float animSpeed = Mathf.Sign(moveInput.y) * 0.5f;
                 animator.SetFloat("fReverse", animSpeed);
             }
             else
             {
-                animator.SetBool("IsClimbing", false);
+                animator.SetBool("IsLadderClimbing", false);
             }
         }
     }
@@ -850,71 +1001,145 @@ public class PlayerMovement : MonoBehaviour
 
     void ActionOnTopCorner()
     {
-        if (isOnLadder || isStomping)
+        if (isOnLadder /*|| isStomping*/)
         {
             return;
         }
-        if (!isCliffHanging && !isClimbingCliff)
+        if (!isCliffProgressing)
         {
-            rb2d.gravityScale = currGravityScale;
+            return;
+        }
+        if (isCliffFall)
+        {
+            return;
+        }
+        if (cliffHanger.handAttach == null && !isCliffX)
+        {
             return;
         }
 
-        if (!isClimbingCliff && !isDroppingCliff)
+        if (!isInitialPos)
+        {
+            isInitialPos = true;
+
+            Transform attachTransform = cliffHanger.handAttach.transform;
+            handInitialOffset = handForHang.transform.InverseTransformPoint(transform.position);
+            handInitialOffset = new Vector3(handInitialOffset.x * spriteDirection, handInitialOffset.y, 0f);
+
+            beforeHangPos = transform.position;
+            transform.position = attachTransform.position + handInitialOffset;
+
+            bodyCollider2d.enabled = false;
+            feetCollider2d.enabled = false;
+            //Debug.Log("InitialPos");
+
+            animator.SetBool("IsCliffHang", true);
+            //animator.SetTrigger("TriggerCliffHang");
+        }
+
+        if (!isCliffY && !isCliffX && !isCliffFall)
         {
             rb2d.gravityScale = 0f;
             rb2d.velocity = Vector2.zero;
+
             if (moveInput.y == -1f)
             {
-                isDroppingCliff = true;
-                isClimbingCliff = false;
-                //Debug.Log("Dropping Cliff");
+                isCliffFall = true;
+                isCliffY = false;
+                animator.SetBool("IsCliffHang", false);
+                animator.SetBool("IsCliffFall", true);
             }
             else if (moveInput.y == 1f)
             {
-                isClimbingCliff = true;
-                isDroppingCliff = false;
-                //Debug.Log("Climbing Cliff");
-            }
-            else
-            {
-                //Debug.Log("Hanging Cliff");
+                isCliffY = true;
+                animator.SetBool("IsCliffY", true);
+                animator.SetBool("IsCliffHang", false);
+                //animator.SetTrigger("TriggerCliffY");
             }
         }
 
-        if (isDroppingCliff)
+        if (isCliffFall)
         {
+            animator.SetBool("IsCliffHang", false);
+            animator.SetBool("IsCliffFall", true);
+            //animator.SetTrigger("TriggerCliffFall");
+
+            transform.position = new Vector3(beforeHangPos.x, transform.position.y, 0f);
+
             rb2d.gravityScale = currGravityScale;
+
+            isCliffHang = false;
+            isInitialPos = false;
+            bodyCollider2d.enabled = true;
+            feetCollider2d.enabled = true;
+
+            //Debug.Log("Dropping Cliff");
             return;
         }
-        else if (!isCliffHanging && isClimbingCliff)
-        {
-            if(climbingCoroutine == null)
-            {
-                climbingCoroutine = StartCoroutine(EndOfClimbingCliff());
 
-                //Debug.Log("Start Coroutine");
-            }
-            climbToApply.Set(climbingSpeed * spriteDirection, rb2d.velocity.y);
-            rb2d.velocity = climbToApply;
-            //Debug.Log("Cliff Stepping");
-        }
-        else if (isClimbingCliff)
+        if (isCliffY)
         {
-            climbToApply.Set(0f, climbingSpeed);
-            rb2d.velocity = climbToApply;
-            //Debug.Log("Cliff Upping"); 
+            CliffYDirection();
+        }else if (isCliffX)
+        {
+            CliffXDirection();
         }
     }
 
-    IEnumerator EndOfClimbingCliff()
+    void CliffYDirection()
     {
-        yield return new WaitForSecondsRealtime(0.5f);
-        isClimbingCliff = false;
-        isDroppingCliff = true;
-        climbingCoroutine = null;
+        float cliffHeight = bodyCollider2d.size.y / 2 - handInitialOffset.y;
+
+        //CliffXAnimLength
+        float cliffSpeed = cliffHeight / CliffYAnimLength;
+        climbToApply.Set(0f, cliffSpeed);
+        rb2d.velocity = climbToApply;
+        if (cliffCoroutine == null)
+        {
+            cliffCoroutine = StartCoroutine(AfterClimbingYDirection());
+            //Debug.Log("CliffYDirection");
+        }
+    }
+
+    IEnumerator AfterClimbingYDirection()
+    {
+        yield return new WaitUntil(IsEscapeTopCorner);
+        //yield return new WaitForSecondsRealtime(CliffYAnimLength);
+        cliffCoroutine = null;
+        isCliffY = false;
+        isCliffX = true;
+        // start to x direction
+    }
+
+    bool IsEscapeTopCorner()
+    {
+        return cliffHanger.IsEscapeTopCorner();
+    }
+
+    void CliffXDirection()
+    {
+        float cliffWidth = bodyCollider2d.size.x - handInitialOffset.x * spriteDirection;
+        float cliffSpeed = cliffWidth / CliffXAnimLength;
+        climbToApply.Set(cliffSpeed * spriteDirection, 0f);
+        rb2d.velocity = climbToApply;
+        if (cliffCoroutine == null)
+        {
+            animator.SetBool("IsCliffY", false);
+            animator.SetBool("IsCliffX", true);
+            cliffCoroutine = StartCoroutine(AfterClimbingXDirection());
+        }
+    }
+
+    IEnumerator AfterClimbingXDirection()
+    {
+        yield return new WaitForSecondsRealtime(CliffXAnimLength);
+        cliffCoroutine = null;
         rb2d.gravityScale = currGravityScale;
-        //Debug.Log("Climbing Cliff Ends");
+        bodyCollider2d.enabled = true;
+        feetCollider2d.enabled = true;
+
+        animator.SetBool("IsCliffX", false);
+        animator.SetBool("IsCliffFall", true);
     }
 
     // ===========================================

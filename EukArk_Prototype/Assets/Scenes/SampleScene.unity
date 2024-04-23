@@ -265,7 +265,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.4600003, y: 0.120000355, z: -10}
+  m_LocalPosition: {x: -7.153, y: 1.1520003, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -427,7 +427,7 @@ Transform:
   m_GameObject: {fileID: 721488540}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.4600003, y: 0.120000355, z: -10}
+  m_LocalPosition: {x: -7.153, y: 1.1520003, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -694,7 +694,7 @@ CompositeCollider2D:
   m_GameObject: {fileID: 1969449527}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 6200000, guid: bfc545a59588725428428d51f2b17092, type: 2}
+  m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -2283,6 +2283,22 @@ PrefabInstance:
       propertyPath: m_ForceReceiveLayers.m_Bits
       value: 951
       objectReference: {fileID: 0}
+    - target: {fileID: 3739364883730024709, guid: 80a8a2aecf6b16a4db64b2ab8beed638, type: 3}
+      propertyPath: m_Color.a
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3739364883730024709, guid: 80a8a2aecf6b16a4db64b2ab8beed638, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3739364883730024709, guid: 80a8a2aecf6b16a4db64b2ab8beed638, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3739364883730024709, guid: 80a8a2aecf6b16a4db64b2ab8beed638, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3949800079383414970, guid: 80a8a2aecf6b16a4db64b2ab8beed638, type: 3}
       propertyPath: attackReactTime
       value: 1
@@ -2361,13 +2377,17 @@ PrefabInstance:
       propertyPath: splashAttackPrefab
       value: 
       objectReference: {fileID: 199360290689305016, guid: d20bd04a54c3ab145a62ffa1dcf8b63f, type: 3}
+    - target: {fileID: 767004489456217245, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 850927365903669041, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.46
+      value: -7.153
       objectReference: {fileID: 0}
     - target: {fileID: 850927365903669041, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.12
+      value: 1.152
       objectReference: {fileID: 0}
     - target: {fileID: 850927365903669041, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_LocalPosition.z
@@ -2404,7 +2424,7 @@ PrefabInstance:
     - target: {fileID: 1779825811057576611, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_Icon
       value: 
-      objectReference: {fileID: 1206586993520771344, guid: 0000000000000000d000000000000000, type: 0}
+      objectReference: {fileID: 0}
     - target: {fileID: 1779825811057576611, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_Name
       value: JongYoon
@@ -2417,6 +2437,10 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Player
       objectReference: {fileID: 0}
+    - target: {fileID: 4795470657809225344, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5501411083459557515, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_ExcludeLayers.m_Bits
       value: 503
@@ -2426,12 +2450,20 @@ PrefabInstance:
       value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5868258517467336754, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5868258517467336754, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_TagString
       value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: jumpSpeed
       value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeed
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: stompSetTime
@@ -2461,6 +2493,118 @@ PrefabInstance:
       propertyPath: swiftMeleeCooldown
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].time
+      value: 0.41886967
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].time
+      value: 0.80117524
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].time
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[0].value
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].value
+      value: 0.88278234
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].value
+      value: 0.11986568
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].value
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[0].inSlope
+      value: -0.20215641
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].inSlope
+      value: -0.49505463
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].inSlope
+      value: -0.9831847
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].inSlope
+      value: -0.4690936
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[0].outSlope
+      value: -0.20215641
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].inWeight
+      value: 0.22360656
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].outSlope
+      value: -0.49505463
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].inWeight
+      value: 0.36375803
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].outSlope
+      value: -0.9831847
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].inWeight
+      value: 0.73347664
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].outSlope
+      value: -0.4690936
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[0].outWeight
+      value: 0.51271266
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].outWeight
+      value: 0.33333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].outWeight
+      value: 0.33333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[0].tangentMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[1].tangentMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[2].tangentMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6214766506506911132, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: meleeSpeedScale.m_Curve.Array.data[3].tangentMode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7618922935928045545, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8278919235567400576, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 1171078047, guid: 11f11ff46a00ade42902eff684f80c28, type: 3}
     - target: {fileID: 8312958496139890939, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_ExcludeLayers.m_Bits
       value: 39

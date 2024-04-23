@@ -15,12 +15,14 @@ public class CombatComponents : MonoBehaviour
     [SerializeField] float attackReactTime = 1f;
     [SerializeField] float attackCooldown = 3f;
     [SerializeField] float attackAfterDelay = 1f;
+    [SerializeField] float hitAfterImmune = 0.2f;
 
     [Header("Attack Components")]
     [SerializeField]  GameObject splashAttackPrefab;
     GameObject emptyTemp = null;
     GameObject splashAttackObject = null;
     SplashAttackComp splashAttackComp;
+    [SerializeField] GameObject obsidianProjectile;
 
     public bool isAlive = true;
     public bool isAttacking = false;
@@ -83,8 +85,8 @@ public class CombatComponents : MonoBehaviour
 
             if (isAlive)
             {
+                StartCoroutine(HitAfterImmune());
                 monsterMovement.SetHitState();
-                
             }
             else
             {
@@ -93,17 +95,29 @@ public class CombatComponents : MonoBehaviour
         }
     }
 
+    IEnumerator HitAfterImmune()
+    {
+        isImmune = true;
+        yield return new WaitForSecondsRealtime(hitAfterImmune);
+        isImmune = false;
+    }
+
     public void DealDamage(CombatComponents _other)
     {
         _other.Hit(damagePoints);
     }
 
-    public void Attack()
+    public void MeleeAttack()
     {
         foreach (CombatComponents combatComponents in combatCompListInAttackRange)
         {
             DealDamage(combatComponents);
         }
+    }
+
+    public void MissileAttack()
+    {
+
     }
 
     public void SplashAttack()
@@ -249,7 +263,7 @@ public class CombatComponents : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(attackReactTime);
         isAttacking = true;
-        Attack();
+        MeleeAttack();
         StartCoroutine(CheckAttacking());
     }
 
