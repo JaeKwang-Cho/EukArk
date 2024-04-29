@@ -44,7 +44,21 @@ public class CliffHanger : MonoBehaviour
         if (_other.CompareTag("TopCorner"))
         {
             isTriggerTopCorner = true;
-            handAttach = _other.transform.GetChild(0).gameObject;
+            if(_other.transform.childCount >= 2)
+            {
+                if (transform.parent.GetComponent<PlayerMovement>().spriteDirection == 1)
+                {
+                    handAttach = _other.transform.GetChild(0).gameObject;
+                }
+                else
+                {
+                    handAttach = _other.transform.GetChild(1).gameObject;
+                }
+            }
+            else
+            {
+                handAttach = _other.transform.GetChild(0).gameObject;
+            }
         }
     }
 

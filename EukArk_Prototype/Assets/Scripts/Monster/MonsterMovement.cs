@@ -10,6 +10,7 @@ public enum MonsterState
     TryToAttack,
     Melee,
     Hit,
+    Stun,
     Die,
 }
 
@@ -85,11 +86,10 @@ public class MonsterMovement : MonoBehaviour
         }
     }
 
-   
 
     void StateSelector()
     {
-        if(monsterState == MonsterState.Die || monsterState == MonsterState.Hit)
+        if(monsterState == MonsterState.Die || monsterState == MonsterState.Hit || monsterState == MonsterState.Stun)
         {
             return;
         }
@@ -111,7 +111,7 @@ public class MonsterMovement : MonoBehaviour
         {
             if (combatComponents.IsInAttackRange() && !combatComponents.IsAttackCooldown())
             {
-                if (combatComponents.TryAttackProgress())
+                if (combatComponents.AITryAttackProgress())
                 {
                     monsterState = MonsterState.TryToAttack;
                 }
@@ -131,6 +131,15 @@ public class MonsterMovement : MonoBehaviour
     {
         switch (monsterState)
         {
+            case MonsterState.Die:
+                {
+                    // Die
+                    speedToApply.Set(0, rb2d.velocity.y);
+                    rb2d.velocity = speedToApply;
+                    isTryingToAttack = false;
+                    //Debug.Log("Die");
+                }
+                break;
             case MonsterState.Idle:
                 {
                     speedToApply.Set(idleSpeed, rb2d.velocity.y);
@@ -164,7 +173,7 @@ public class MonsterMovement : MonoBehaviour
                     rb2d.velocity = speedToApply;
                     if (!isTryingToAttack)
                     {
-                        combatComponents.AttackProgress();
+                        combatComponents.AIAttackProgress();
                         isTryingToAttack = true;
                     }
                 }
@@ -177,15 +186,8 @@ public class MonsterMovement : MonoBehaviour
                 }
                 break;
             case MonsterState.Hit:
+            case MonsterState.Stun:
                 {
-                    speedToApply.Set(0, rb2d.velocity.y);
-                    rb2d.velocity = speedToApply;
-                    isTryingToAttack = false;
-                }
-                break;
-            case MonsterState.Die:
-                {
-                    // Die
                     speedToApply.Set(0, rb2d.velocity.y);
                     rb2d.velocity = speedToApply;
                     isTryingToAttack = false;
@@ -199,6 +201,11 @@ public class MonsterMovement : MonoBehaviour
 
     void ChaseProgress()
     {
+        if (monsterState == MonsterState.Die || monsterState == MonsterState.Hit || monsterState == MonsterState.Stun)
+        {
+            return;
+        }
+
         distanceToPlayer = Mathf.Abs(playerObject.transform.position.x - gameObject.transform.position.x);
         float direction = Mathf.Sign(playerObject.transform.position.x - gameObject.transform.position.x);
         if (direction == 1f)
@@ -209,6 +216,17 @@ public class MonsterMovement : MonoBehaviour
         {
             chaseSpeed = -Mathf.Abs(chaseSpeed);
         }
+    }
+
+    public bool IsParryingAble()
+    {
+        return monsterState == MonsterState.TryToAttack;
+    }
+
+    public void SetStunStateByParrying()
+    {
+        monsterState = MonsterState.Stun;
+        combatComponents.AIStunedStopAllCoroutines();
     }
 
     public MonsterState GetMonsterState()
@@ -269,12 +287,11 @@ public class MonsterMovement : MonoBehaviour
     {
         monsterState = MonsterState.Die;
         StartCoroutine(DieProgress());
-        
     }
 
     IEnumerator DieProgress()
     {
-        yield return new WaitForSecondsRealtime(2f);
+        yield return new WaitForSecondsRealtime(1f);
         Destroy(gameObject);
     }
 }

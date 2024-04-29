@@ -9,9 +9,10 @@ public class PlayerMovement : MonoBehaviour
     [Header("Numeric Attributes")]
     [Header("Numeric Attributes - Speed")]
     [SerializeField] float runSpeed = 5f;
-    [SerializeField] float crouchSpeed = 1f;
+    //[SerializeField] float crouchSpeed = 1f;
     [SerializeField] float jumpSpeed = 7f;
-    [SerializeField] float climbingSpeed = 2f;
+    [SerializeField] float maxAirSpeed;
+    [SerializeField] float airSpeed = 3f;
 
     [Header("Numeric Attributes - Combat")]
     [SerializeField] float dashDodgeTime = 0.2f;
@@ -43,12 +44,13 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 climbToApply = new Vector2();
     private float currGravityScale;
     private float dashSpeed = 5f;
-    private float spriteDirection = 1f;
-
+    public float spriteDirection = 1f;
+    private float hasSpeedBeforeJump = 0f;
+    
     // Ground
     [Header("Ground Status")]
-    // Crouch
-    public bool isCrouching = false;
+    // SpecialKey
+    public bool isSpecialKeyDown = false;
     // Run
     public bool isMoving = false;
 
@@ -58,8 +60,6 @@ public class PlayerMovement : MonoBehaviour
     public bool isDashCooldown = false;
     //public bool isSwiftMelee = false;
     //public bool isSwiftMeleeCooldown = false;
-    Coroutine dashCoroutine = null;
-    Coroutine dashCooldownCoroutine = null;
 
     // InAir
     [Header("InAir Status")]
@@ -69,11 +69,10 @@ public class PlayerMovement : MonoBehaviour
     public bool isRising = false;
     public bool isLanding = false;
 
-    // Ladder
-    [Header("Ladder Status")]
-    public bool isOnLadder = false;
-    public bool isClimbing = false;
-    public bool isLadderHanging = false;
+    public bool isAirMelee = false;
+    public bool isAirMeleeCooldown = false;
+    private float airMeleeAnimLength = 0f;
+
 
     // Hang
     [Header("Hang Status")]
@@ -108,6 +107,11 @@ public class PlayerMovement : MonoBehaviour
     Coroutine ComboWaiter = null;
     Coroutine ComboCooldownWaiter = null;
 
+    [Header("Fire Attributes")]
+    public bool isFire = false;
+    public float groundObAnimLength = 0f;
+    public float airObAnimLength = 0f;
+
     // InAir Melee (X)
 
     // Stomp
@@ -134,6 +138,7 @@ public class PlayerMovement : MonoBehaviour
         cliffHanger = GetComponentInChildren<CliffHanger>();
         cliffHanger.SetFeetCollider2d(feetCollider2d);
 
+        maxAirSpeed = runSpeed;
         currGravityScale = rb2d.gravityScale;
         FindHandObject();
         GetCliffAnimLength();
@@ -165,7 +170,21 @@ public class PlayerMovement : MonoBehaviour
             {
                 CliffXAnimLength = animationClip.length;
             }
+            else if (animationClip.name == "AirMelee_Player_Test")
+            {
+                airMeleeAnimLength = animationClip.length;
+            }
+            else if (animationClip.name == "ob_Default")
+            {
+                groundObAnimLength = animationClip.length;
+            }
+            else if (animationClip.name == "ob_Jump")
+            {
+                airObAnimLength = animationClip.length;
+            }
         }
+
+        //Debug.Log(airMeleeAnimLength);
     }
 
     void Update()
@@ -190,15 +209,13 @@ public class PlayerMovement : MonoBehaviour
         }
 
         UpdateMovementState();
-        UpdateComboBufferInput();
+        UpdateMeleeBufferInput();
         if (isGroundMelee)
         {
             WaitUntilMeleeAnimEnds();
         }
-        UpdateClimbAnim();
         UpdateJumpAnim();
         UpdateRunAnim();
-        UpdateCrouchAnim();
         FlipSprite();
     }
 
@@ -219,7 +236,7 @@ public class PlayerMovement : MonoBehaviour
                 isCliffHang = false;
             }
 
-            if (!isLadderHanging || !isCliffProgressing)
+            if (!isCliffProgressing)
             {
                 if (yVelocity < -Mathf.Epsilon)
                 {
@@ -250,6 +267,8 @@ public class PlayerMovement : MonoBehaviour
             if (isInAir)
             {
                 isLanding = true;
+                hasSpeedBeforeJump = 0f;
+                isInAir = false;
             }
             if (isCliffProgressing)
             {
@@ -260,31 +279,19 @@ public class PlayerMovement : MonoBehaviour
                 cliffCoroutine = null;
                 animator.SetBool("IsCliffFall", false);
             }
-            isInAir = false;
             isFalling = false;
             isRising = false;
         }
 
-        // On the Ladder
-        if (bodyCollider2d.IsTouchingLayers(LayerMask.GetMask("Ladder")))
-        {
-            isOnLadder = true;
-        }
-        else
-        {
-            isOnLadder = false;
-        }
-
         ActionOnTopCorner();
-        ClimbLadder();
-        Crouch();
+        CheckSpecialKey();
         FlipSprite();
         BasicMove();
     }
 
     void FlipSprite()
     {
-        if(isLadderHanging || isGroundMelee || isCliffProgressing)
+        if(isGroundMelee || isCliffProgressing || isFire)
         {
             return;
         }
@@ -298,7 +305,7 @@ public class PlayerMovement : MonoBehaviour
         */
         if (Mathf.Abs(moveInput.x) > Mathf.Epsilon)
         {
-            spriteDirection = Mathf.Sign(moveInput.x);
+            spriteDirection = Mathf.Sign(rb2d.velocity.x);
             transform.localScale = new Vector2(spriteDirection, 1f);
             isMoving = true;
         }
@@ -321,16 +328,26 @@ public class PlayerMovement : MonoBehaviour
     void OnCyanParrying(InputValue _inputValue)
     {
         Debug.Log("OnCyanParrying");
+        combatComponents.Parrying();
+        animator.SetTrigger("TriggerParrying");
     }
 
     void OnYellowParrying(InputValue _inputValue)
     {
+        if (isCliffProgressing)
+        {
+            return;
+        }
         Debug.Log("OnYellowParrying");
+        combatComponents.Parrying();
+        animator.SetTrigger("TriggerParrying");
     }
 
     void OnMagentaParrying(InputValue _inputValue)
     {
         Debug.Log("OnMagentaParrying");
+        combatComponents.Parrying();
+        animator.SetTrigger("TriggerParrying");
     }
 
     // ===================================
@@ -460,8 +477,8 @@ public class PlayerMovement : MonoBehaviour
 
         dashSpeed = dashDodgeLength / dashDodgeTime;
         SetPassThroughEnemy();
-        dashCoroutine = StartCoroutine(DashEnd());
-        dashCooldownCoroutine = StartCoroutine(DashCooldown());
+        StartCoroutine(DashEnd());
+        StartCoroutine(DashCooldown());
     }
 
     void SetPassThroughEnemy()
@@ -478,7 +495,6 @@ public class PlayerMovement : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(dashCooldown);
         isDashCooldown = false;
-        dashCooldownCoroutine = null;
     }
 
     IEnumerator DashEnd()
@@ -492,7 +508,6 @@ public class PlayerMovement : MonoBehaviour
         combatComponents.isImmune = false;
 
         isDashing = false;
-        dashCoroutine = null;
     }
 
     // ===================================
@@ -554,47 +569,56 @@ public class PlayerMovement : MonoBehaviour
 
     void OnFire(InputValue _inputValue)
     {
-        if (isDie || isHit /*|| isStomping*/)
+        if (isDie || isHit || isFire /*|| isStomping*/ )
         {
             return;
         }
 
-        if (isInAir)
+        if (isSpecialKeyDown)
         {
-            return;
+            if (isInAir)
+            {
+                animator.SetBool("isObAir", true);
+                StartCoroutine(WaitObAirAnimEnds());
+            }
+            else
+            {
+                animator.SetBool("isObGround", true);
+                StartCoroutine(WaitObGroundAnimEnds());
+            }
+            combatComponents.MissileAttack();
+
+            isFire = true;
         }
-        animator.SetTrigger("TriggerMissile");
+        else
+        {
+            animator.SetTrigger("TriggerMissile");
+        }
+
+        spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
+        transform.localScale = new Vector2(spriteDirection, 1f);
     }
+
+    IEnumerator WaitObGroundAnimEnds()
+    {
+        yield return new WaitForSecondsRealtime(groundObAnimLength);
+        isFire = false;
+        animator.SetBool("isObGround", false);
+    }
+
+    IEnumerator WaitObAirAnimEnds()
+    {
+        yield return new WaitForSecondsRealtime(airObAnimLength);
+        isFire = false;
+        animator.SetBool("isObAir", false);
+    }
+
+
 
     void OnMelee(InputValue _inputValue)
     {
         if (isDie || isHit/* || isStomping*/)
         {
-            return;
-        }
-
-        if (isInAir)
-        {
-            //if (Input.GetKey(KeyCode.S))
-            {
-                //OnStomp();
-            }
-            //else
-            {
-                animator.SetTrigger("TriggerAirMelee");
-                combatComponents.MeleeAttack();
-            }
-            return;
-        }
-
-        if (isCrouching)
-        {
-            isGroundMelee = true;
-            animator.SetTrigger("TriggerLowMelee");
-            combatComponents.MeleeAttack();
-            currMeleeAnimName = "LowMelee";
-
-            rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
             return;
         }
 
@@ -610,22 +634,44 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        if (isSpecialKeyDown)
+        {
+            // 여기에 일반 원거리 공격
+            return;
+        }
+
+        combatComponents.ResetMeleeAttack();
+
+        spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
+        transform.localScale = new Vector2(spriteDirection, 1f);
+
+        float xGapValue = crossHair.transform.position.x - transform.position.x;
+        float yGapValue = crossHair.transform.position.y - transform.position.y;
+
+        SetDirectionOfSlash(xGapValue, yGapValue);
+
+        if (isInAir)
+        {
+            //if (Input.GetKey(KeyCode.S))
+            {
+                //OnStomp();
+            }
+            //else
+            if(isAirMeleeCooldown){
+                return;
+            }
+            isAirMeleeCooldown = true;
+            isAirMelee = true;
+            StartCoroutine(WaitTilAirMeleeAnim());
+            return;
+        }
+
         if (isMoving)
         {
             isMoving = false;
         }
-        /*
-        if (!isUpperMeleeCooldown && Input.GetKey(KeyCode.W)) 
-        {
-            isGroundMelee = true;
-            animator.SetTrigger("TriggerUpperMelee");
-            combatComponents.MeleeAttack();
-            currMeleeAnimName = "UpperMelee";
-
-            rb2d.velocity = new Vector2(0f, rb2d.velocity.y);
-            return;
-        }
-        */
+        
+        // Ground Melee
         numOfClicks++;
         //Debug.Log("start" + numOfClicks);
         numOfClicks = Mathf.Clamp(numOfClicks, 0, 3);
@@ -633,29 +679,57 @@ public class PlayerMovement : MonoBehaviour
         {
             ComboReset();
         }
+        if (numOfClicks == 0)
+        {
+            return;
+        }
         isMeleeButtonReleased = true;
 
-        spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
-
-        float xGapValue = crossHair.transform.position.x - transform.position.x;
-        //bool flipThreshold = Mathf.Abs(xGapValue) > 0.5f;
-        //if (!flipThreshold)
-        {
-           // return;
-        }
-        transform.localScale = new Vector2(spriteDirection, 1f);
-
         float distanceToCursor = Vector2.Distance(crossHair.transform.position, transform.position);
-        //float yGapValue = Mathf.Abs(crossHair.transform.position.x - transform.position.x);
 
         meleeDirection = meleeSpeed * xGapValue / distanceToCursor;
 
+        if (combatComponents.slashSpriteForPlayer != null)
+        {
+            combatComponents.slashSpriteForPlayer.color = Color.white;
+        }
         //Debug.Log("end " + numOfClicks);
     }
 
-    void UpdateComboBufferInput()
+    void SetDirectionOfSlash(float _xGapValue, float _yGapValue)
+    {
+        Vector2 cursorDirection = new Vector2(_xGapValue, _yGapValue);
+        cursorDirection.Normalize();
+        combatComponents.SetSlashTransform(cursorDirection.x / 2f, cursorDirection.y / 2f);
+    }
+
+    IEnumerator WaitTilAirMeleeAnim()
+    {
+        yield return new WaitForSecondsRealtime(airMeleeAnimLength);
+        isAirMeleeCooldown = false;
+        isAirMelee = false;
+        animator.SetBool("IsAirMelee", false);
+        if (combatComponents.slashSpriteForPlayer != null)
+        {
+            combatComponents.slashSpriteForPlayer.color = Color.clear;
+        }
+    }
+
+    void UpdateMeleeBufferInput()
     {
         bool bAttackMotion = false;
+        if (isAirMelee)
+        {
+            animator.SetBool("IsAirMelee", true);
+            combatComponents.MeleeAttack();
+
+            if (combatComponents.slashSpriteForPlayer != null)
+            {
+                combatComponents.slashSpriteForPlayer.color = Color.white;
+            }
+
+            return;
+        }
 
         if (numOfClicks == 1)
         {
@@ -690,9 +764,14 @@ public class PlayerMovement : MonoBehaviour
             || animator.GetCurrentAnimatorStateInfo(0).IsName("C_Combo"))
         {
             MeleeGoForward();
-            if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1f)
+            if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.9f && animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
             {
                 isMeleeButtonReleased = false;
+
+                if (combatComponents.slashSpriteForPlayer != null)
+                {
+                    combatComponents.slashSpriteForPlayer.color = Color.clear;
+                }
             }
             
         }
@@ -757,18 +836,34 @@ public class PlayerMovement : MonoBehaviour
 
     void BasicMove()
     {
-        if (isLadderHanging || isCliffProgressing/* || isStomping */|| isGroundMelee)
+        if (isCliffProgressing/* || isStomping */|| isGroundMelee )
         {
             return;
         }
         float playerVelocity = moveInput.x * runSpeed;
-        if (isCrouching)
+        //if (isSpecialKeyDown)
         {
-            playerVelocity = moveInput.x * crouchSpeed;
+            //playerVelocity = moveInput.x * crouchSpeed;
         }
-        else if (isDashing)
+        if (isDashing)
         {
             playerVelocity = moveInput.x * dashSpeed;
+        }
+        else if (isInAir)
+        {
+            if (Mathf.Abs(hasSpeedBeforeJump) > Mathf.Epsilon)
+            {
+                hasSpeedBeforeJump += airSpeed * moveInput.x * Time.deltaTime;
+                playerVelocity = hasSpeedBeforeJump;
+                playerVelocity = Mathf.Clamp(playerVelocity, -maxAirSpeed, maxAirSpeed);
+            }
+            else
+            {
+                hasSpeedBeforeJump += airSpeed * moveInput.x * Time.deltaTime;
+                playerVelocity = hasSpeedBeforeJump;
+                playerVelocity = Mathf.Clamp(playerVelocity, -airSpeed, airSpeed);
+            }
+            //Debug.Log(playerVelocity);
         }
         speedToApply.Set(playerVelocity, rb2d.velocity.y);
         rb2d.velocity = speedToApply;
@@ -776,11 +871,12 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateRunAnim()
     {
-        if (isInAir || isLadderHanging)
+        if (isInAir)
         {
             animator.SetBool("IsRunning", false);
             return;
         }
+        animator.SetBool("IsInAir", false);
         if (isDashing)
         {
             animator.SetBool("IsDashing", true);
@@ -805,11 +901,7 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    // ===================================
-    // ====== Crouch Animation Area ======
-    // ===================================
-
-    void Crouch()
+    void CheckSpecialKey()
     {
         //if (isStomping)
         {
@@ -817,36 +909,11 @@ public class PlayerMovement : MonoBehaviour
         }
         if (moveInput.y < 0f)
         {
-            isCrouching = true;
+            isSpecialKeyDown = true;
         }
         else
         {
-            isCrouching = false;
-        }
-    }
-
-    void UpdateCrouchAnim()
-    {
-        if (isInAir || isLadderHanging /*|| isStomping*/)
-        {
-            return;
-        }
-        if (isCrouching)
-        {
-            animator.SetBool("IsCrouching", true);
-            if (isMoving)
-            {
-                animator.SetBool("IsCrouchWalking", true);
-            }
-            else
-            {
-                animator.SetBool("IsCrouchWalking", false);
-            }
-        }
-        else if (!isCrouching)
-        {
-            animator.SetBool("IsCrouchWalking", false);
-            animator.SetBool("IsCrouching", false);
+            isSpecialKeyDown = false;
         }
     }
 
@@ -862,19 +929,17 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        if (isInAir && !isLadderHanging && !isCliffProgressing)
+        if (isInAir && !isCliffProgressing)
         {
             return;
         }
-        if (isCrouching)
+        if (isSpecialKeyDown)
         {
             return;
         }
         if (_inputValue.isPressed)
         {
-            isInAir = true;
-            isLadderHanging = false;
-            isClimbing = false;
+            hasSpeedBeforeJump = airSpeed * moveInput.x;
 
             rb2d.gravityScale = currGravityScale;
             isStartToJump = true;
@@ -885,7 +950,7 @@ public class PlayerMovement : MonoBehaviour
 
     void UpdateJumpAnim()
     {
-        if(isLadderHanging || isCliffProgressing)
+        if(isCliffProgressing)
         {
             if (!isCliffFall)
             {
@@ -911,87 +976,15 @@ public class PlayerMovement : MonoBehaviour
         else if (isStartToJump)
         {
             animator.SetBool("IsRunning", false);
-            animator.SetBool("IsLadderClimbing", false);
-            animator.SetBool("IsLadderHanging", false);
 
             animator.SetTrigger("TriggerJump");
 
             isStartToJump = false;
         }
-        else if (isRising && !isStartToJump)
+        else if (isRising)
         {
             animator.SetBool("IsFalling", false);
             isRising = false;
-        }
-    }
-
-    // ===================================
-    // ======== Climb Animtion Area ======
-    // ===================================
-
-    void ClimbLadder()
-    {
-        if (isCliffProgressing /*|| isStomping*/)
-        {
-            return;
-        }
-        if (!isOnLadder)
-        {
-            rb2d.gravityScale = currGravityScale;
-            isLadderHanging = false;
-            isClimbing = false;
-            return;
-        }
-        if (!isInAir)
-        {
-            isLadderHanging = false;
-        }
-
-        if (Mathf.Abs(moveInput.y) > Mathf.Epsilon)
-        {
-            isClimbing = true;
-            isLadderHanging = true;
-        }
-        else
-        {
-            isClimbing = false;
-            if (!isLadderHanging)
-            {
-                rb2d.gravityScale = currGravityScale;
-            }
-        }
-
-        if (isLadderHanging)
-        {
-            rb2d.gravityScale = 0f;
-            float climbVelocity = moveInput.y * climbingSpeed;
-            climbToApply.Set(0f, climbVelocity);
-            rb2d.velocity = climbToApply;
-        }
-    }
-
-    void UpdateClimbAnim()
-    {
-        if (!isLadderHanging)
-        {
-            animator.SetBool("IsLadderClimbing", false);
-            animator.SetBool("IsLadderHanging", false);
-            return;
-        }
-        else
-        {
-            animator.SetBool("IsLadderHanging", true);
-
-            if (isClimbing)
-            {
-                animator.SetBool("IsLadderClimbing", true);
-                float animSpeed = Mathf.Sign(moveInput.y) * 0.5f;
-                animator.SetFloat("fReverse", animSpeed);
-            }
-            else
-            {
-                animator.SetBool("IsLadderClimbing", false);
-            }
         }
     }
 
@@ -1001,10 +994,6 @@ public class PlayerMovement : MonoBehaviour
 
     void ActionOnTopCorner()
     {
-        if (isOnLadder /*|| isStomping*/)
-        {
-            return;
-        }
         if (!isCliffProgressing)
         {
             return;

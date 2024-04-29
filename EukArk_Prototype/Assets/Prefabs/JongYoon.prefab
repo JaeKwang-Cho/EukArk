@@ -115,29 +115,66 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   runSpeed: 5
-  crouchSpeed: 1
   jumpSpeed: 5
-  climbingSpeed: 2
+  maxAirSpeed: 0
+  airSpeed: 3
   dashDodgeTime: 0.2
   dashDodgeLength: 2
   dashCooldown: 2
-  swiftMeleeCooldown: 5
-  currGravityScale: 0
-  spriteDirection: 1
-  isCrouching: 0
+  meleeSpeedScale:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: -0.20215641
+      outSlope: -0.20215641
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.51271266
+    - serializedVersion: 3
+      time: 0.41886967
+      value: 0.88278234
+      inSlope: -0.49505463
+      outSlope: -0.49505463
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.22360656
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.80117524
+      value: 0.11986568
+      inSlope: -0.9831847
+      outSlope: -0.9831847
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.36375803
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: -0.4690936
+      outSlope: -0.4690936
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.73347664
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  meleeSpeed: 5
+  isSpecialKeyDown: 0
   isMoving: 0
   isDashing: 0
   isDashCooldown: 0
-  isSwiftMelee: 0
-  isSwiftMeleeCooldown: 0
   isInAir: 0
   isStartToJump: 0
   isFalling: 0
   isRising: 0
   isLanding: 0
-  isOnLadder: 0
-  isClimbing: 0
-  isLadderHanging: 0
+  isAirMelee: 0
+  isAirMeleeCooldown: 0
   isCliffProgressing: 0
   isInitialPos: 0
   isCliffHang: 0
@@ -154,16 +191,10 @@ MonoBehaviour:
   maxComboDelayTime: 0.75
   isMeleeCooldown: 0
   isMeleeButtonPressed: 0
-  isUpperMeleeCooldown: 0
-  isStomping: 0
-  bStartStomp: 0
-  bMiddleStomp: 0
-  bEndStomp: 0
-  stompSetTime: 0.5
-  stompSpeed: 10
-  stompAfterDelay: 0.5
-  isStompCooldown: 0
-  stompCooldown: 5
+  isMeleeButtonReleased: 0
+  isFire: 0
+  groundObAnimLength: 0
+  airObAnimLength: 0
 --- !u!70 &5731641265517426891
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -599,6 +630,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7077084275484373700, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+      propertyPath: parryingPrefab
+      value: 
+      objectReference: {fileID: 199360290689305016, guid: 80818186f35a4ee4e8e8348587567c78, type: 3}
+    - target: {fileID: 7077084275484373700, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+      propertyPath: obsidianProjectile
+      value: 
+      objectReference: {fileID: 3411923681444280113, guid: 4f1e28db726ad094392711cc2f7cda47, type: 3}
+    - target: {fileID: 7077084275484373700, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+      propertyPath: splashAttackPrefab
+      value: 
+      objectReference: {fileID: 199360290689305016, guid: 80818186f35a4ee4e8e8348587567c78, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

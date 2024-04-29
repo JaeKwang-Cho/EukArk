@@ -8,6 +8,7 @@ TagManager:
   - Ground
   - TopCorner
   - HandForHang
+  - ObsProjectile
   layers:
   - Default
   - TransparentFX
@@ -20,8 +21,8 @@ TagManager:
   - Ladder
   - Monster
   - Attacks
-  - 
-  - 
+  - ObsProjectile
+  - ColorSpirit
   - 
   - 
   - 
@@ -59,4 +60,7 @@ TagManager:
     locked: 0
   - name: UI
     uniqueID: 2942065727
+    locked: 0
+  - name: ColorSpirit
+    uniqueID: 2413253027
     locked: 0

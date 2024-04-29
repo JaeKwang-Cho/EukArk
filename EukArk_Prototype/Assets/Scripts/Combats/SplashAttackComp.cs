@@ -38,10 +38,12 @@ public class SplashAttackComp : MonoBehaviour
         List<Collider2D> allCollisionMonsters = new List<Collider2D>();
         splashAttackCircle.OverlapCollider(contactFilter, allCollisionMonsters);
 
+        HashSet<CombatComponents> checkDups = new HashSet<CombatComponents>();
+
         foreach(Collider2D monCol in allCollisionMonsters)
         {
             CombatComponents combatComp = monCol.gameObject.GetComponentInChildren<CombatComponents>();
-            if(combatComp != null)
+            if (combatComp != null && checkDups.Add(combatComp))
             {
                 combatComp.Hit(damagePoints);
                 Debug.Log("Splash Attack");

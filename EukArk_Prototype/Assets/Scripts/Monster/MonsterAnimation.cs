@@ -30,6 +30,7 @@ public class MonsterAnimation : MonoBehaviour
         {
             case MonsterState.Idle:
                 {
+                    animator.SetBool("IsStun", false);
                     if (Mathf.Abs(parentRigidBody2D.velocity.x) > Mathf.Epsilon)
                     {
                         animator.SetBool("IsRunning", true);
@@ -42,6 +43,7 @@ public class MonsterAnimation : MonoBehaviour
                 break;
             case MonsterState.Chase:
                 {
+                    animator.SetBool("IsStun", false);
                     if (parentCombatComponents.IsAttackAfterDelay())
                     {
                         animator.SetBool("IsRunning", false);
@@ -52,7 +54,8 @@ public class MonsterAnimation : MonoBehaviour
                 break;
             case MonsterState.TryToAttack:
                 {
-                    if(prevMonsterState != currMonsterState)
+                    animator.SetBool("IsStun", false);
+                    if (prevMonsterState != currMonsterState)
                     {
                         animator.SetTrigger("TriggerTryToAttack");
                     }
@@ -60,6 +63,7 @@ public class MonsterAnimation : MonoBehaviour
                 break;
             case MonsterState.Melee:
                 {
+                    animator.SetBool("IsStun", false);
                     if (prevMonsterState != currMonsterState)
                     {
                         animator.SetTrigger("TriggerMelee");
@@ -68,6 +72,7 @@ public class MonsterAnimation : MonoBehaviour
                 break;
             case MonsterState.Hit:
                 {
+                    animator.SetBool("IsStun", false);
                     //animator.ResetTrigger("TriggerMelee");
                     //animator.ResetTrigger("TriggerTryToAttack");
                     if (prevMonsterState != currMonsterState)
@@ -76,8 +81,17 @@ public class MonsterAnimation : MonoBehaviour
                     }
                 }
                 break;
+            case MonsterState.Stun:
+                {
+                    if (prevMonsterState != currMonsterState)
+                    {
+                        animator.SetBool("IsStun", true);
+                    }
+                }
+                break;
             case MonsterState.Die:
                 {
+                    animator.SetBool("IsStun", false);
                     animator.SetTrigger("TriggerDie");
                 }
                 break;

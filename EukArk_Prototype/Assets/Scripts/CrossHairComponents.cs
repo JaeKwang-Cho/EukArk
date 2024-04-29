@@ -10,7 +10,7 @@ public class CrossHairComponents : MonoBehaviour
     GameObject playerObject;
     PlayerMovement playerMovement;
     CircleCollider2D aimGravityCircle;
-    GameObject currAimMonster = null;
+    public GameObject currAimMonster = null;
     List<Collider2D> allCollisionMonsters;
 
     float timer = 0f;
@@ -79,12 +79,14 @@ public class CrossHairComponents : MonoBehaviour
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Mouse.current.position.ReadValue());
             mousePos.z = 0;
             transform.position = mousePos;
+            //Debug.Log("null");
         }
         else
         {
             Vector3 mousePos = currAimMonster.transform.position;
             mousePos.z = 0;
             transform.position = mousePos;
+            //Debug.Log("valid");
         }
 
     }

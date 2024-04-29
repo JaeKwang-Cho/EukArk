@@ -48,7 +48,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 951
+    m_Bits: 2999
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -195,7 +195,7 @@ BoxCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 887
+    m_Bits: 2935
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -240,6 +240,7 @@ MonoBehaviour:
   idleSpeed: 1
   chaseSpeed: 1.5
   jumpSpeed: 5
+  monsterState: 0
 --- !u!1001 &6117674561284274814
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -248,78 +249,82 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6095108987764062211}
     m_Modifications:
-    - target: {fileID: 3451615926716092958, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3451615926716092958, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_Size.x
       value: 0.22758555
       objectReference: {fileID: 0}
-    - target: {fileID: 3451615926716092958, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3451615926716092958, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_Size.y
       value: 0.4888058
       objectReference: {fileID: 0}
-    - target: {fileID: 3451615926716092958, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3451615926716092958, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_Offset.x
       value: -0.40959394
       objectReference: {fileID: 0}
-    - target: {fileID: 3451615926716092958, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3451615926716092958, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_Offset.y
       value: -0.20855965
       objectReference: {fileID: 0}
-    - target: {fileID: 3451615926716092958, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3451615926716092958, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_ExcludeLayers.m_Bits
-      value: 951
+      value: 2999
       objectReference: {fileID: 0}
-    - target: {fileID: 3660956292391090855, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 3660956292391090855, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_Name
-      value: Combats
+      value: EnemyCombats
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalPosition.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalRotation.w
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalRotation.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalRotation.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalRotation.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+    - target: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7077084275484373700, guid: 313700427bc806a418612b68f190aa56, type: 3}
+      propertyPath: hitEffect
+      value: 
+      objectReference: {fileID: 8172706995688700646, guid: 38f1acd43c26927459ee4966118cc89b, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: 313700427bc806a418612b68f190aa56, type: 3}
 --- !u!4 &1840752190836229199 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: 5579382439737441841, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+  m_CorrespondingSourceObject: {fileID: 5579382439737441841, guid: 313700427bc806a418612b68f190aa56, type: 3}
   m_PrefabInstance: {fileID: 6117674561284274814}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &7385269631058484368

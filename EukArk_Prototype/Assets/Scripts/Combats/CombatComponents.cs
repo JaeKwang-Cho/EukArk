@@ -5,6 +5,9 @@ using UnityEngine.Assertions;
 
 public class CombatComponents : MonoBehaviour
 {
+    [Header("Effect Attributes")]
+    [SerializeField] ParticleSystem hitEffect;
+
     [Header("Numeric Attributes")]
     [SerializeField] float healthPoints = 10f;
     [SerializeField] float damagePoints = 4f;
@@ -15,13 +18,17 @@ public class CombatComponents : MonoBehaviour
     [SerializeField] float attackReactTime = 1f;
     [SerializeField] float attackCooldown = 3f;
     [SerializeField] float attackAfterDelay = 1f;
-    [SerializeField] float hitAfterImmune = 0.2f;
+    [SerializeField] float hitAfterImmune = 0.3f;
+
+    PlayerMovement playerMovement = null;
+    MonsterMovement monsterMovement = null;
+    CrossHairComponents crosshairComponents = null;
 
     [Header("Attack Components")]
-    [SerializeField]  GameObject splashAttackPrefab;
+    [SerializeField]  GameObject parryingPrefab;
     GameObject emptyTemp = null;
-    GameObject splashAttackObject = null;
-    SplashAttackComp splashAttackComp;
+    GameObject parryingObject = null;
+    ParryingComp parryingComp;
     [SerializeField] GameObject obsidianProjectile;
 
     public bool isAlive = true;
@@ -30,20 +37,41 @@ public class CombatComponents : MonoBehaviour
     public bool isAttackCooldown = false;
     public bool isAttackAfterDelay = false;
     public bool isAttackSuccess = false;
-    public bool isImmune
-    {
-        get; set;
-    } = false;
+    public bool isImmune = false;
 
-    BoxCollider2D MeleeAttackBox;
+    GameObject MeleeImpactRange;
+    CapsuleCollider2D MeleeAttackCapsule;
+    BoxCollider2D MeleeBoxCollider;
     GameObject parentGameObject;
     public List<CombatComponents> combatCompListInAttackRange;
+    HashSet<CombatComponents> checkDupHit = new HashSet<CombatComponents>();
+    public SpriteRenderer slashSpriteForPlayer = null;
 
     void Start()
     {
-        MeleeAttackBox = GetComponent<BoxCollider2D>();
+        if (!isAI)
+        {
+            MeleeImpactRange = transform.GetChild(0).gameObject;
+            MeleeAttackCapsule = GetComponentInChildren<CapsuleCollider2D>();
+            slashSpriteForPlayer = MeleeImpactRange.transform.GetChild(0).gameObject.GetComponent<SpriteRenderer>();
+            slashSpriteForPlayer.color = Color.clear;
+        }
+        else
+        {
+            MeleeBoxCollider = GetComponent<BoxCollider2D>();   
+        }
+        
         parentGameObject = gameObject.transform.parent.gameObject;
         combatCompListInAttackRange = new List<CombatComponents>();
+        if (!isAI)
+        {
+            playerMovement = parentGameObject.GetComponent<PlayerMovement>();
+            crosshairComponents = playerMovement.crossHair;
+        }
+        else
+        {
+            monsterMovement = parentGameObject.GetComponent<MonsterMovement>();
+        }
     }
 
     public void Hit(float _damage)
@@ -52,6 +80,7 @@ public class CombatComponents : MonoBehaviour
         {
             return;
         }
+        isImmune = true;
         healthPoints -= _damage;
         //Debug.Log("Is Ai : " + isAI + " Hit...");
         if (healthPoints <= 0)
@@ -61,9 +90,10 @@ public class CombatComponents : MonoBehaviour
 
         if (!isAI)
         {
-            PlayerMovement playerMovement = parentGameObject.GetComponent<PlayerMovement>();
+            playerMovement = parentGameObject.GetComponent<PlayerMovement>();
             if (isAlive)
             {
+                StartCoroutine(HitAfterImmune());
                 playerMovement.SetHitState();
             }
             else
@@ -73,7 +103,7 @@ public class CombatComponents : MonoBehaviour
         }
         else
         {
-            MonsterMovement monsterMovement = parentGameObject.GetComponent<MonsterMovement>();
+            monsterMovement = parentGameObject.GetComponent<MonsterMovement>();
 
             StopAllCoroutines();
             isAttacking = false;
@@ -92,14 +122,25 @@ public class CombatComponents : MonoBehaviour
             {
                 monsterMovement.SetDieState();
             }
+
+            Debug.Log("Monster - Hit");
         }
+        PlayHitEffect();
     }
 
     IEnumerator HitAfterImmune()
     {
-        isImmune = true;
         yield return new WaitForSecondsRealtime(hitAfterImmune);
         isImmune = false;
+    }
+
+    void PlayHitEffect()
+    {
+        if (hitEffect != null)
+        {
+            ParticleSystem particle = Instantiate(hitEffect, transform.position, Quaternion.identity);
+            Destroy(particle.gameObject, particle.main.duration + particle.main.startLifetime.constantMax);
+        }
     }
 
     public void DealDamage(CombatComponents _other)
@@ -107,22 +148,103 @@ public class CombatComponents : MonoBehaviour
         _other.Hit(damagePoints);
     }
 
+    public void SetSlashTransform(float _xOffset, float _yOffset)
+    {
+        Vector2 localPosition = Vector2.zero;
+        Vector3 localRotation = Vector3.zero;
+
+        localPosition.Set(_xOffset + transform.position.x, _yOffset + transform.position.y);
+        //Debug.Log(transform.position.x + ", " + transform.position.y);
+        //Debug.Log(_xOffset + ", " + _yOffset);
+        float radian = Mathf.Atan2(_yOffset, _xOffset);
+        //Debug.Log(radian);
+        float degree = radian * Mathf.Rad2Deg;
+        //Debug.Log(degree);
+        localRotation.Set(0f, 0f, degree + 90f);
+
+        MeleeImpactRange.transform.position = localPosition;
+        MeleeImpactRange.transform.rotation = Quaternion.Euler(localRotation);
+    }
+
     public void MeleeAttack()
     {
-        foreach (CombatComponents combatComponents in combatCompListInAttackRange)
+        if (!isAlive)
         {
-            DealDamage(combatComponents);
+            return;
         }
+
+        ContactFilter2D contactFilter = new ContactFilter2D();
+        List<Collider2D> allCollisionMonsters = new List<Collider2D>();
+
+        if (!isAI)
+        {
+            contactFilter.SetLayerMask(LayerMask.GetMask("Monster"));
+            contactFilter.IsFilteringTrigger(MeleeAttackCapsule);
+            MeleeAttackCapsule.OverlapCollider(contactFilter, allCollisionMonsters);
+        }
+        else
+        {
+            contactFilter.SetLayerMask(LayerMask.GetMask("Player"));
+            contactFilter.IsFilteringTrigger(MeleeBoxCollider);
+            MeleeBoxCollider.OverlapCollider(contactFilter, allCollisionMonsters);
+        }
+
+        foreach (Collider2D monCol in allCollisionMonsters)
+        {
+            CombatComponents combatComp = monCol.gameObject.GetComponentInChildren<CombatComponents>();
+            //Debug.Log(monCol.gameObject);
+            if (combatComp != null && checkDupHit.Add(combatComp))
+            {
+                combatComp.Hit(damagePoints);
+                //Debug.Log("Melee Hit");
+            }
+        }
+    }
+
+    public void ResetMeleeAttack()
+    {
+        checkDupHit.Clear();
     }
 
     public void MissileAttack()
     {
+        if (!isAlive)
+        {
+            return;
+        }
 
+        if (!isAI)
+        {
+            GameObject empty = new GameObject();
+            empty.SetActive(false);
+            GameObject projectile = Instantiate(obsidianProjectile, empty.transform);
+
+            GameObject currAimedMonster = crosshairComponents.currAimMonster;
+            ObsidianProjectile obsidianProjectileComps = projectile.GetComponent<ObsidianProjectile>();
+            obsidianProjectileComps.SetPlayerCombatComp(this);
+            if (currAimedMonster != null)
+            {
+                //Debug.Log("currAimedMonster != null");
+                obsidianProjectileComps.SetAimedGameObject(currAimedMonster);
+            }
+            else
+            {
+                //projectileSpeed
+                Vector2 direction = crosshairComponents.transform.position - transform.position;
+                direction.Normalize();
+                obsidianProjectileComps.SetAimedGameObject(null);
+                projectile.GetComponent<ObsidianProjectile>().SetProjectileVelocity(direction);
+            }
+            projectile.transform.parent = null;
+            Destroy(empty);
+            projectile.transform.position = transform.position;
+            projectile.SetActive(true);
+        }
     }
 
-    public void SplashAttack()
+    public void Parrying()
     {
-        if(emptyTemp != null || splashAttackObject != null)
+        if(emptyTemp != null || parryingObject != null)
         {
             return;
         }
@@ -143,8 +265,8 @@ public class CombatComponents : MonoBehaviour
 
         //Assert.IsTrue(emptyTemp != null);
 
-        splashAttackObject = Instantiate(splashAttackPrefab, emptyTemp.transform);
-        StartCoroutine(WaitUntilCreateSplashComp());
+        parryingObject = Instantiate(parryingPrefab, emptyTemp.transform);
+        StartCoroutine(WaitUntilCreateparryingComp());
     }
 
     bool IsEmptyValid()
@@ -152,39 +274,40 @@ public class CombatComponents : MonoBehaviour
         return emptyTemp.scene.IsValid();
     }
 
-    IEnumerator WaitUntilCreateSplashComp()
+    IEnumerator WaitUntilCreateparryingComp()
     {
-        yield return new WaitUntil(IsSplashValid);
-        if (splashAttackObject == null)
+        yield return new WaitUntil(IsParryingValid);
+        if (parryingObject == null)
         {
-            Debug.Log("splash is null");
+            Debug.Log("parrying is null");
         }
 
-        splashAttackComp = splashAttackObject.GetComponent<SplashAttackComp>();
-        if(splashAttackComp == null)
+        parryingComp = parryingObject.GetComponent<ParryingComp>();
+        if(parryingComp == null)
         {
-            Debug.Log("splashAttackComp is null");
+            Debug.Log("parryingComp is null");
         }
 
-        splashAttackObject.transform.position = transform.position;
-        splashAttackObject.transform.parent = null;
+        parryingComp.SetParryingColor(Color.black);
+        parryingObject.transform.position = transform.position;
+        parryingObject.transform.parent = null;
         Destroy(emptyTemp);
-        splashAttackObject.SetActive(true);
+        parryingObject.SetActive(true);
 
-        StartCoroutine(DestroySplashComp());
+        StartCoroutine(DestroyParryingComp());
     }
 
-    bool IsSplashValid()
+    bool IsParryingValid()
     {
-        return splashAttackObject.scene.IsValid();
+        return parryingObject.scene.IsValid();
     }
 
-    IEnumerator DestroySplashComp()
+    IEnumerator DestroyParryingComp()
     {
         yield return new WaitForSecondsRealtime(0.1f);
-        splashAttackComp.AttackSplash();
-        Destroy(splashAttackObject);
-        splashAttackObject = null;
+        parryingComp.DoParrying();
+        Destroy(parryingObject);
+        parryingObject = null;
     }
 
     private void OnTriggerEnter2D(Collider2D _other)
@@ -237,7 +360,7 @@ public class CombatComponents : MonoBehaviour
         }
     }
 
-    public bool TryAttackProgress()
+    public bool AITryAttackProgress()
     {
         if (isAttackCooldown)
         {
@@ -252,7 +375,12 @@ public class CombatComponents : MonoBehaviour
         return true;
     }
 
-    public void AttackProgress()
+    public void AIStunedStopAllCoroutines()
+    {
+        StopAllCoroutines();
+    }
+
+    public void AIAttackProgress()
     {
         isAttackCooldown = true;
         isAttackAfterDelay = true;
@@ -263,6 +391,7 @@ public class CombatComponents : MonoBehaviour
     {
         yield return new WaitForSecondsRealtime(attackReactTime);
         isAttacking = true;
+        ResetMeleeAttack();
         MeleeAttack();
         StartCoroutine(CheckAttacking());
     }
