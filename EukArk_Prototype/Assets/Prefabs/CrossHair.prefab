@@ -47,7 +47,7 @@ CircleCollider2D:
     m_Bits: 0
   m_ExcludeLayers:
     serializedVersion: 2
-    m_Bits: 1527
+    m_Bits: 5623
   m_LayerOverridePriority: 0
   m_ForceSendLayers:
     serializedVersion: 2
@@ -165,3 +165,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 249751d060262814096cd65a34c93a7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currAimMonster: {fileID: 0}

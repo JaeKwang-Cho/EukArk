@@ -159,6 +159,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerObjectToFollow: {fileID: 0}
+  crossHairToFollow: {fileID: 0}
   followCurve:
     serializedVersion: 2
     m_Curve:
@@ -248,6 +249,8 @@ MonoBehaviour:
   waveLength: 1
   spiritColor: {r: 0, g: 0, b: 0, a: 0}
   distanceToFollowMaxSpeed: 5
+  distanceSelectedSpirit: 1
+  selectToFollowMaxSpeed: 10
 --- !u!58 &7892939676568861660
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -282,4 +285,4 @@ CircleCollider2D:
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
   serializedVersion: 2
-  m_Radius: 0.3
+  m_Radius: 0.25

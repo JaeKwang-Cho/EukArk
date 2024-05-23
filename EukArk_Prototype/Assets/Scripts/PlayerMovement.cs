@@ -27,6 +27,12 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] float meleeSpeed = 5f;
     private float meleeDirection = 1f;
 
+    [Header("Spirit Attributes")]
+    [SerializeField] ColorSpirit magentaSpirit;
+    [SerializeField] ColorSpirit cyanSpirit;
+    [SerializeField] ColorSpirit yellowSprit;
+    GameObject curSelectedSpirit;
+
     Vector2 moveInput;
     Rigidbody2D rb2d;
     Animator animator;
@@ -111,6 +117,9 @@ public class PlayerMovement : MonoBehaviour
     public bool isFire = false;
     public float groundObAnimLength = 0f;
     public float airObAnimLength = 0f;
+
+    [Header("Color Attributes")]
+    public Color colorState = Color.white;
 
     // InAir Melee (X)
 
@@ -330,6 +339,20 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("OnCyanParrying");
         combatComponents.Parrying();
         animator.SetTrigger("TriggerParrying");
+
+        magentaSpirit.UnseletToFire();
+        yellowSprit.UnseletToFire();
+
+        if (cyanSpirit.SelectToFire())
+        {
+            colorState = Color.cyan;
+            curSelectedSpirit = cyanSpirit.gameObject;
+        }
+        else
+        {
+            colorState = Color.white;
+            curSelectedSpirit = null;
+        }
     }
 
     void OnYellowParrying(InputValue _inputValue)
@@ -341,6 +364,20 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("OnYellowParrying");
         combatComponents.Parrying();
         animator.SetTrigger("TriggerParrying");
+        
+        cyanSpirit.UnseletToFire();
+        magentaSpirit.UnseletToFire();
+
+        if (yellowSprit.SelectToFire())
+        {
+            colorState = Color.yellow;
+            curSelectedSpirit = yellowSprit.gameObject;
+        }
+        else
+        {
+            colorState = Color.white;
+            curSelectedSpirit= null;
+        }
     }
 
     void OnMagentaParrying(InputValue _inputValue)
@@ -348,6 +385,20 @@ public class PlayerMovement : MonoBehaviour
         Debug.Log("OnMagentaParrying");
         combatComponents.Parrying();
         animator.SetTrigger("TriggerParrying");
+
+        cyanSpirit.UnseletToFire();
+        yellowSprit.UnseletToFire();
+
+        if (magentaSpirit.SelectToFire())
+        {
+            colorState = Color.magenta;
+            curSelectedSpirit = magentaSpirit.gameObject;
+        }
+        else
+        {
+            colorState = Color.white;
+            curSelectedSpirit = null;
+        }
     }
 
     // ===================================
@@ -592,7 +643,12 @@ public class PlayerMovement : MonoBehaviour
         }
         else
         {
+            if (curSelectedSpirit == null)
+            {
+                return;
+            }
             animator.SetTrigger("TriggerMissile");
+            combatComponents.ColorMissileAttack(curSelectedSpirit.transform.position, colorState);
         }
 
         spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);
@@ -613,7 +669,32 @@ public class PlayerMovement : MonoBehaviour
         animator.SetBool("isObAir", false);
     }
 
+    void OnMeleeReady(InputValue _inputValue)
+    {
+        if (isDie || isHit/* || isStomping*/)
+        {
+            return;
+        }
 
+        if (isMeleeCooldown)
+        {
+            //Debug.Log("Cooldown");
+            return;
+        }
+
+        if (isDashing)
+        {
+            //OnSwiftAttack();
+            return;
+        }
+
+        if (isSpecialKeyDown)
+        {
+            // 여기에 일반 원거리 공격
+            return;
+        }
+        //animator.SetTrigger("TriggerMelee");
+    }
 
     void OnMelee(InputValue _inputValue)
     {
@@ -692,6 +773,7 @@ public class PlayerMovement : MonoBehaviour
         if (combatComponents.slashSpriteForPlayer != null)
         {
             combatComponents.slashSpriteForPlayer.color = Color.white;
+            //Debug.Log("Set White");
         }
         //Debug.Log("end " + numOfClicks);
     }
@@ -764,13 +846,14 @@ public class PlayerMovement : MonoBehaviour
             || animator.GetCurrentAnimatorStateInfo(0).IsName("C_Combo"))
         {
             MeleeGoForward();
-            if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 0.9f && animator.GetCurrentAnimatorStateInfo(0).normalizedTime < 1f)
+            if (animator.GetCurrentAnimatorStateInfo(0).normalizedTime > 1.5f && isMeleeButtonReleased)
             {
                 isMeleeButtonReleased = false;
 
                 if (combatComponents.slashSpriteForPlayer != null)
                 {
                     combatComponents.slashSpriteForPlayer.color = Color.clear;
+                    //Debug.Log("Set Clear");
                 }
             }
             
@@ -809,6 +892,12 @@ public class PlayerMovement : MonoBehaviour
         numOfClicks = 0;
         isMeleeCooldown = true;
         isGroundMelee = false;
+
+        if (combatComponents.slashSpriteForPlayer != null)
+        {
+            combatComponents.slashSpriteForPlayer.color = Color.clear;
+            //Debug.Log("Set Clear");
+        }
     }
 
     IEnumerator WaitComboCooldown()

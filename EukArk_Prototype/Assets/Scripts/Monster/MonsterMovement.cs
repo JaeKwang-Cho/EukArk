@@ -16,6 +16,9 @@ public enum MonsterState
 
 public class MonsterMovement : MonoBehaviour
 {
+    [Header("Attributes")]
+    [SerializeField] bool dumbCondition = false;
+
     [Header("Numeric Attributes")]
     [Header("Numeric Attributes - Speed")]
     [SerializeField] float idleSpeed = 1f;
@@ -34,6 +37,8 @@ public class MonsterMovement : MonoBehaviour
     CombatComponents playerCombatComps;
     DetectPlayer detector;
     MonsterAnimation monsterAnimation;
+    ColorArmorComponent colorArmorComponent;
+    ColorComponent colorComponent;
 
     private Vector2 speedToApply = new Vector2();
     private Vector2 jumpToApply = new Vector2();
@@ -49,8 +54,12 @@ public class MonsterMovement : MonoBehaviour
 
         combatComponents = GetComponentInChildren<CombatComponents>();
         detector = GetComponentInChildren<DetectPlayer>();
+
         monsterAnimation = GetComponentInChildren<MonsterAnimation>();
         monsterAnimation.SetParent(this);
+
+        colorArmorComponent = GetComponentInChildren<ColorArmorComponent>();
+        colorArmorComponent.SetParent(this);
 
         monsterState = MonsterState.Idle;
         playerObject = null;
@@ -58,10 +67,14 @@ public class MonsterMovement : MonoBehaviour
 
     void Update()
     {
-        StateSelector();
+        if (!dumbCondition)
+        {
+            StateSelector();
+            StateActor();
+            FlipSprite();
+        }
         monsterAnimation.UpdateAnimation();
-        StateActor();
-        FlipSprite();
+        colorArmorComponent.UpdateAnimation();
     }
 
     // Sense Platforms
@@ -84,6 +97,16 @@ public class MonsterMovement : MonoBehaviour
                 }
             }
         }
+    }
+
+    public bool HasArmor()
+    {
+        return colorArmorComponent.ArmorValid();
+    }
+
+    public void DestroyArmor()
+    {
+        colorArmorComponent.DestroyArmor();
     }
 
 

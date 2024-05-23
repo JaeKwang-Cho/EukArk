@@ -164,6 +164,10 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   meleeSpeed: 5
+  magentaSpirit: {fileID: 0}
+  cyanSpirit: {fileID: 0}
+  yellowSprit: {fileID: 0}
+  spriteDirection: 1
   isSpecialKeyDown: 0
   isMoving: 0
   isDashing: 0
@@ -195,6 +199,7 @@ MonoBehaviour:
   isFire: 0
   groundObAnimLength: 0
   airObAnimLength: 0
+  colorState: {r: 1, g: 1, b: 1, a: 1}
 --- !u!70 &5731641265517426891
 CapsuleCollider2D:
   m_ObjectHideFlags: 0
@@ -634,6 +639,10 @@ PrefabInstance:
       propertyPath: parryingPrefab
       value: 
       objectReference: {fileID: 199360290689305016, guid: 80818186f35a4ee4e8e8348587567c78, type: 3}
+    - target: {fileID: 7077084275484373700, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
+      propertyPath: colorProjectile
+      value: 
+      objectReference: {fileID: 3411923681444280113, guid: 2eb7d42182afd604a88207c47f3a386e, type: 3}
     - target: {fileID: 7077084275484373700, guid: 9fbd58223d989c846b832d53864a3260, type: 3}
       propertyPath: obsidianProjectile
       value: 

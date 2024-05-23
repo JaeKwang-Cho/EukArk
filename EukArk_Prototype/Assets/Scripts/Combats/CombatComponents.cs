@@ -10,7 +10,7 @@ public class CombatComponents : MonoBehaviour
 
     [Header("Numeric Attributes")]
     [SerializeField] float healthPoints = 10f;
-    [SerializeField] float damagePoints = 4f;
+    [SerializeField] float damagePoints = 10f;
     [SerializeField] float attackableTime = 0.1f;
 
     [Header("AI Attributes")]
@@ -30,6 +30,7 @@ public class CombatComponents : MonoBehaviour
     GameObject parryingObject = null;
     ParryingComp parryingComp;
     [SerializeField] GameObject obsidianProjectile;
+    [SerializeField] GameObject colorProjectile;
 
     public bool isAlive = true;
     public bool isAttacking = false;
@@ -38,6 +39,7 @@ public class CombatComponents : MonoBehaviour
     public bool isAttackAfterDelay = false;
     public bool isAttackSuccess = false;
     public bool isImmune = false;
+    public bool isColorFilled = false;
 
     GameObject MeleeImpactRange;
     CapsuleCollider2D MeleeAttackCapsule;
@@ -76,12 +78,19 @@ public class CombatComponents : MonoBehaviour
 
     public void Hit(float _damage)
     {
-        if (isImmune)
+        if (isImmune || !isColorFilled)
         {
             return;
         }
         isImmune = true;
-        healthPoints -= _damage;
+        if (monsterMovement.HasArmor())
+        {
+            monsterMovement.DestroyArmor();
+        }
+        else
+        {
+            healthPoints -= _damage;
+        }
         //Debug.Log("Is Ai : " + isAI + " Hit...");
         if (healthPoints <= 0)
         {
@@ -126,6 +135,11 @@ public class CombatComponents : MonoBehaviour
             Debug.Log("Monster - Hit");
         }
         PlayHitEffect();
+    }
+
+    public void SetColorFilled()
+    {
+        isColorFilled = true;
     }
 
     IEnumerator HitAfterImmune()
@@ -238,6 +252,45 @@ public class CombatComponents : MonoBehaviour
             projectile.transform.parent = null;
             Destroy(empty);
             projectile.transform.position = transform.position;
+            projectile.SetActive(true);
+        }
+    }
+
+    public void ColorMissileAttack(Vector3 _firePosition, Color _color)
+    {
+        if (!isAlive)
+        {
+            return;
+        }
+
+        if (!isAI)
+        {
+            GameObject empty = new GameObject();
+            empty.transform.position = _firePosition;
+
+
+            empty.SetActive(false);
+            GameObject projectile = Instantiate(colorProjectile, empty.transform);
+
+            GameObject currAimedMonster = crosshairComponents.currAimMonster;
+            ColorProjectile colorProjectileComps = projectile.GetComponent<ColorProjectile>();
+            colorProjectileComps.SetPlayerCombatComp(this, _color);
+            if (currAimedMonster != null)
+            {
+                //Debug.Log("currAimedMonster != null");
+                colorProjectileComps.SetAimedGameObject(currAimedMonster);
+            }
+            else
+            {
+                //projectileSpeed
+                Vector2 direction = crosshairComponents.transform.position - _firePosition;
+                direction.Normalize();
+                colorProjectileComps.SetAimedGameObject(null);
+                projectile.GetComponent<ColorProjectile>().SetProjectileVelocity(direction);
+            }
+            projectile.transform.parent = null;
+            Destroy(empty);
+            projectile.transform.position = _firePosition;
             projectile.SetActive(true);
         }
     }

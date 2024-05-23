@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class ObsidianProjectile : MonoBehaviour
 {
-    float projectileSpeed = 10f;
+    [SerializeField] float projectileSpeed = 10f;
+    [SerializeField] float projectileDamage = 10f;
     Rigidbody2D rb2d = null;
     public Vector2 fireDirection
     {
@@ -66,7 +67,7 @@ public class ObsidianProjectile : MonoBehaviour
         if (_other.CompareTag("Monster"))
         {
             CombatComponents enemyCombatComp = _other.gameObject.GetComponentInChildren<CombatComponents>();
-            enemyCombatComp.Hit(2f);
+            enemyCombatComp.Hit(projectileDamage);
         }
         //Debug.Log("Enter");
         Destroy(gameObject);
