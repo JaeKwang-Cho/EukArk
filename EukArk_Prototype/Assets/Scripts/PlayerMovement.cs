@@ -32,6 +32,9 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] ColorSpirit cyanSpirit;
     [SerializeField] ColorSpirit yellowSprit;
     GameObject curSelectedSpirit;
+    bool bCurCyan;
+    bool bCurMagenta;
+    bool bCurYellow;
 
     Vector2 moveInput;
     Rigidbody2D rb2d;
@@ -347,11 +350,15 @@ public class PlayerMovement : MonoBehaviour
         {
             colorState = Color.cyan;
             curSelectedSpirit = cyanSpirit.gameObject;
+            bCurCyan = true;
+            bCurMagenta = false;
+            bCurYellow = false;
         }
         else
         {
             colorState = Color.white;
             curSelectedSpirit = null;
+            bCurCyan = false;
         }
     }
 
@@ -372,11 +379,15 @@ public class PlayerMovement : MonoBehaviour
         {
             colorState = Color.yellow;
             curSelectedSpirit = yellowSprit.gameObject;
+            bCurCyan = false;
+            bCurMagenta = false;
+            bCurYellow = true;
         }
         else
         {
             colorState = Color.white;
             curSelectedSpirit= null;
+            bCurYellow = false;
         }
     }
 
@@ -393,11 +404,15 @@ public class PlayerMovement : MonoBehaviour
         {
             colorState = Color.magenta;
             curSelectedSpirit = magentaSpirit.gameObject;
+            bCurCyan = false;
+            bCurMagenta = true;
+            bCurYellow = false;
         }
         else
         {
             colorState = Color.white;
             curSelectedSpirit = null;
+            bCurMagenta = false;
         }
     }
 
@@ -648,7 +663,19 @@ public class PlayerMovement : MonoBehaviour
                 return;
             }
             animator.SetTrigger("TriggerMissile");
-            combatComponents.ColorMissileAttack(curSelectedSpirit.transform.position, colorState);
+            if (bCurCyan)
+            {
+                combatComponents.CyanMissileAttack(curSelectedSpirit.transform.position, colorState);
+            }
+            else if (bCurMagenta)
+            {
+                combatComponents.MagentaMissileAttack(curSelectedSpirit.transform.position, colorState);
+            }
+            else if (bCurYellow)
+            {
+                combatComponents.YellowMissileAttack(curSelectedSpirit.transform.position, colorState);
+            }
+            
         }
 
         spriteDirection = Mathf.Sign(crossHair.transform.position.x - transform.position.x);

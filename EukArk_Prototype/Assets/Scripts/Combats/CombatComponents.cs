@@ -30,7 +30,9 @@ public class CombatComponents : MonoBehaviour
     GameObject parryingObject = null;
     ParryingComp parryingComp;
     [SerializeField] GameObject obsidianProjectile;
-    [SerializeField] GameObject colorProjectile;
+    [SerializeField] GameObject cyanProjectile;
+    [SerializeField] GameObject magentaProjectile;
+    [SerializeField] GameObject yellowProjectile;
 
     public bool isAlive = true;
     public bool isAttacking = false;
@@ -256,7 +258,7 @@ public class CombatComponents : MonoBehaviour
         }
     }
 
-    public void ColorMissileAttack(Vector3 _firePosition, Color _color)
+    void ColorMissileAttack(Vector3 _firePosition, Color _color, GameObject _colorProjectile)
     {
         if (!isAlive)
         {
@@ -268,13 +270,12 @@ public class CombatComponents : MonoBehaviour
             GameObject empty = new GameObject();
             empty.transform.position = _firePosition;
 
-
             empty.SetActive(false);
-            GameObject projectile = Instantiate(colorProjectile, empty.transform);
+            GameObject projectile = Instantiate(_colorProjectile, empty.transform);
 
             GameObject currAimedMonster = crosshairComponents.currAimMonster;
             ColorProjectile colorProjectileComps = projectile.GetComponent<ColorProjectile>();
-            colorProjectileComps.SetPlayerCombatComp(this, _color);
+            colorProjectileComps.SetPlayerCombatComp(this, _color, _firePosition);
             if (currAimedMonster != null)
             {
                 //Debug.Log("currAimedMonster != null");
@@ -293,6 +294,21 @@ public class CombatComponents : MonoBehaviour
             projectile.transform.position = _firePosition;
             projectile.SetActive(true);
         }
+    }
+
+    public void CyanMissileAttack(Vector3 _firePosition, Color _color)
+    {
+        ColorMissileAttack(_firePosition, _color, cyanProjectile);
+    }
+
+    public void MagentaMissileAttack(Vector3 _firePosition, Color _color)
+    {
+        ColorMissileAttack(_firePosition,_color, magentaProjectile);
+    }
+
+    public void YellowMissileAttack(Vector3 _firePosition, Color _color)
+    {
+        ColorMissileAttack(_firePosition, _color, yellowProjectile);
     }
 
     public void Parrying()

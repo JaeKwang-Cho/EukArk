@@ -2620,6 +2620,18 @@ PrefabInstance:
       propertyPath: isAI
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 110532775441930321, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: cyanProjectile
+      value: 
+      objectReference: {fileID: 3411923681444280113, guid: 5c3abec3ca6658142b44ef56741382b3, type: 3}
+    - target: {fileID: 110532775441930321, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: yellowProjectile
+      value: 
+      objectReference: {fileID: 3411923681444280113, guid: 7f0019f815b18e74dae26d31ef0de98e, type: 3}
+    - target: {fileID: 110532775441930321, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
+      propertyPath: magentaProjectile
+      value: 
+      objectReference: {fileID: 3411923681444280113, guid: 88877635a25a25e4ebc97f48c0d163ac, type: 3}
     - target: {fileID: 767004489456217245, guid: 27ffa32a3d536834788bda8ee4ee3401, type: 3}
       propertyPath: m_IsActive
       value: 1
